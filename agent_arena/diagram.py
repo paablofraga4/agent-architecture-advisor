@@ -9,13 +9,28 @@ STRICT RULES:
 1. Output ONLY valid Mermaid code inside a ```mermaid code block.
 2. Use flowchart TD (top-down) layout.
 3. Include all major components mentioned in the proposal.
-4. Group components by layer (ingestion, processing, storage, serving, observability).
-5. Use subgraph blocks for logical grouping.
-6. Use clear, short labels.
-7. Show data flow direction with arrows.
-8. Do not include explanatory text outside the mermaid block.
-9. Keep it readable — max 25 nodes.
-10. Use appropriate shapes: databases as cylinders [(...)], services as rounded rectangles(...), queues as stadium-shaped ([...]).
+4. Group components by layer using subgraph blocks: Ingestion, Processing, AI/Agents, Storage, Serving, Observability. Omit layers that don't apply.
+5. Use clear, short labels (no more than 4 words per node).
+6. Show data flow direction with arrows; use labeled arrows for non-obvious flows: A -->|event| B
+7. Do not include explanatory text outside the mermaid block.
+8. Keep it readable — max 25 nodes.
+9. Use shapes by component kind:
+   - databases / vector stores: [(name)]
+   - object storage / blobs: [/name/]
+   - queues / streams / event buses: ([name])
+   - serverless / compute services: (name)
+   - LLMs / agents: {{name}}
+   - users / external systems: ((name))
+10. ALWAYS append these classDef blocks at the end and assign each node to ONE of the provider classes
+    based on the cloud service prefix (Azure/Microsoft -> azure, AWS/Amazon -> aws, GCP/Google -> gcp,
+    everything else -> neutral):
+
+    classDef azure   fill:#0078D4,stroke:#005A9E,color:#ffffff
+    classDef aws     fill:#FF9900,stroke:#CC7A00,color:#1a1a1a
+    classDef gcp     fill:#4285F4,stroke:#1A73E8,color:#ffffff
+    classDef neutral fill:#374151,stroke:#1f2937,color:#ffffff
+
+    Example assignment line:  class blob,functions,openai azure
 """
 
 

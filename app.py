@@ -29,23 +29,28 @@ if sys.version_info >= (3, 14):
 
 import chainlit as cl
 
+from agent_arena.flow_visualizer import FlowState
+from agent_arena.report_renderer import render_report_header, render_architecture_section
+
+
+WELCOME = (
+    "# Agent Arena\n\n"
+    "Describe una idea de proyecto. Verás el pipeline de agentes en vivo (nodos), "
+    "el informe final con la arquitectura recomendada y un diagrama por capas.\n\n"
+    "Tras la propuesta, cualquier mensaje se trata como **pregunta de seguimiento**. "
+    "Para empezar de cero escribe: *\"nuevo proyecto: [tu idea]\"*\n\n"
+    "**Ideas de ejemplo para la demo:**\n"
+    "- Asistente RAG sobre normativa interna de un banco con auditoría regulatoria\n"
+    "- Pipeline de detección de fraude en tiempo real sobre transacciones\n"
+    "- Copiloto de PMO que resuma estado de proyectos desde Jira y SharePoint\n"
+    "- Extracción de PDFs farmacéuticos a BI con human-in-the-loop\n"
+)
+
 
 @cl.on_chat_start
 async def on_chat_start():
     cl.user_session.set("arena_result", None)
-
-    await cl.Message(
-        content=(
-            "# Agent Arena\n\n"
-            "Describe una idea de proyecto. El sistema extraera requisitos, "
-            "recuperara contexto desde Qdrant, hara debatir a los agentes Azure/AWS/GCP, "
-            "ejecutara un juez, generara una propuesta final, estimara costos y "
-            "producira un diagrama de arquitectura.\n\n"
-            "Despues de la propuesta, **cualquier mensaje sera tratado como pregunta de seguimiento**. "
-            "Puedes preguntar lo que quieras sobre la propuesta generada.\n\n"
-            "Para iniciar un **nuevo proyecto**, escribe: *\"nuevo proyecto: [tu idea]\"*"
-        )
-    ).send()
+    await cl.Message(content=WELCOME).send()
 
 
 @cl.on_message
@@ -61,17 +66,13 @@ async def on_message(message: cl.Message):
     user_input = message.content.strip()
     model = os.getenv("AGENT_ARENA_MODEL", DEFAULT_MODEL)
 
-    # If there's a previous result, treat messages as follow-up by default.
-    # The user must explicitly say "nuevo proyecto" or click the action to start fresh.
     previous_result = cl.user_session.get("arena_result")
     if previous_result is not None:
         lower = user_input.lower().strip()
         is_new_project = any(kw in lower for kw in [
             "nuevo proyecto", "new project", "nueva idea", "empezar de nuevo",
-            "start over", "reset", "otra idea", "quiero construir", "quiero crear",
-            "necesito un sistema", "diseña", "diseñar",
+            "start over", "reset", "otra idea",
         ])
-
         if not is_new_project:
             thinking_msg = cl.Message(content="Procesando pregunta de seguimiento...")
             await thinking_msg.send()
@@ -89,127 +90,47 @@ async def on_message(message: cl.Message):
                 await cl.Message(content=f"Error en follow-up: {e}").send()
                 return
         else:
-            # Clear previous result so the full pipeline runs
             cl.user_session.set("arena_result", None)
 
-    # Full arena pipeline
-    status_msg = cl.Message(content="Ejecutando Agent Arena...")
-    await status_msg.send()
+    # ---- Live pipeline flow as a single updating message ----
+    flow_state = FlowState()
+    flow_msg = cl.Message(content=flow_state.render_message())
+    await flow_msg.send()
 
-    # Clarification callback for interactive planner
     async def clarification_callback(questions, critical_assumptions):
-        clarification_text = ""
+        text = ""
         if questions:
-            clarification_text += "**Informacion faltante:**\n"
-            for q in questions:
-                clarification_text += f"- {q}\n"
+            text += "**Información faltante:**\n" + "\n".join(f"- {q}" for q in questions) + "\n"
         if critical_assumptions:
-            clarification_text += "\n**Suposiciones criticas que necesitan confirmacion:**\n"
-            for a in critical_assumptions:
-                clarification_text += f"- {a}\n"
-        clarification_text += "\nResponde con mas detalles o escribe **continuar** para proceder con las suposiciones actuales."
-
-        # Ask user via Chainlit
-        response = await cl.AskUserMessage(
-            content=clarification_text,
-            timeout=120,
-        ).send()
-
+            text += "\n**Suposiciones críticas:**\n" + "\n".join(f"- {a}" for a in critical_assumptions) + "\n"
+        text += "\nResponde con más detalles o escribe **continuar**."
+        response = await cl.AskUserMessage(content=text, timeout=120).send()
         if response and response.get("output", "").strip().lower() not in ["continuar", "continue", ""]:
             return response["output"]
         return None
 
     async def progress_callback(event: str, payload: dict):
-        if event == "planner_started":
-            async with cl.Step(name="1. Extrayendo requisitos", type="llm") as step:
-                step.input = user_input
-                step.output = "Planner iniciado"
+        # 1) Update the live flow message
+        if flow_state.apply_event(event):
+            flow_msg.content = flow_state.render_message()
+            await flow_msg.update()
 
-        elif event == "planner_finished":
-            async with cl.Step(name="1. Requisitos extraidos", type="llm", language="json") as step:
-                step.input = user_input
-                step.output = payload.get("planner_json", "")
-
-        elif event == "clarification_needed":
-            async with cl.Step(name="1b. Clarificacion necesaria", type="tool") as step:
-                step.output = "Solicitando informacion adicional al usuario"
-
-        elif event == "planner_rerun_started":
-            async with cl.Step(name="1c. Re-ejecutando planner", type="llm") as step:
-                step.output = "Planner re-ejecutado con informacion adicional"
-
-        elif event == "retrieval_started":
-            async with cl.Step(name="2. Recuperando contexto", type="retrieval", language="json") as step:
-                step.input = payload.get("query_summary", "")
-                step.output = "Buscando contexto Azure, AWS, GCP y neutral en Qdrant"
-
-        elif event == "retrieval_finished":
-            async with cl.Step(name="2. Contexto recuperado", type="retrieval") as step:
-                step.output = payload.get("contexts_summary", "")
-
-        elif event == "gcp_no_specific_contexts":
-            async with cl.Step(name="2b. GCP sin docs especificos", type="tool") as step:
-                step.output = payload.get("message", "No GCP-specific documents in Qdrant")
-
-        elif event == "azure_agent_started":
-            async with cl.Step(name="3. Azure Agent", type="llm") as step:
-                step.output = "Generando propuesta Azure"
-
-        elif event == "aws_agent_started":
-            async with cl.Step(name="4. AWS Agent", type="llm") as step:
-                step.output = "Generando propuesta AWS"
-
-        elif event == "gcp_agent_started":
-            async with cl.Step(name="5. GCP Agent", type="llm") as step:
-                step.output = "Generando propuesta GCP"
-
-        elif event == "citation_validation_started":
-            async with cl.Step(name="6. Validando citas", type="tool") as step:
-                step.output = "Comprobando CTX validos en propuestas"
-
-        elif event == "citation_validation_finished":
-            async with cl.Step(name="6. Citas validadas", type="tool") as step:
-                parts = []
-                for provider in ["azure", "aws", "gcp"]:
-                    val = payload.get(f"{provider}_valid")
-                    if val is not None:
-                        parts.append(f"{provider.upper()}: {'OK' if val else 'REWRITE NEEDED'}")
-                step.output = " | ".join(parts)
-
-        elif event.endswith("_rewrite_started"):
-            provider = event.replace("_rewrite_started", "").upper()
-            attempt = payload.get("attempt", 1)
-            async with cl.Step(name=f"6b. Reescribiendo {provider} (intento {attempt})", type="llm") as step:
-                step.output = f"Reescribiendo propuesta {provider}"
-
-        elif event.endswith("_rewrite_exhausted"):
-            provider = event.replace("_rewrite_exhausted", "").upper()
-            async with cl.Step(name=f"6c. {provider} rewrites agotados", type="tool") as step:
-                step.output = f"Se agotaron los reintentos. IDs invalidos: {payload.get('invalid_ids', [])}"
-
-        elif event == "judge_started":
-            async with cl.Step(name="7. Judge Agent", type="llm") as step:
-                step.output = "Comparando propuestas"
-
-        elif event == "judge_finished":
-            async with cl.Step(name="7. Comparacion generada", type="llm") as step:
-                step.output = payload.get("final_comparison", "")
-
-        elif event == "final_architecture_started":
-            async with cl.Step(name="8. Final Architecture Agent", type="llm") as step:
-                step.output = "Sintetizando la arquitectura final seleccionada"
-
-        elif event == "cost_estimation_started":
-            async with cl.Step(name="9. Estimacion de costos", type="llm") as step:
-                step.output = "Estimando costos mensuales por proveedor"
-
-        elif event == "diagram_generation_started":
-            async with cl.Step(name="10. Generando diagrama", type="llm") as step:
-                step.output = "Generando diagrama Mermaid de la arquitectura"
-
-        elif event == "error":
-            async with cl.Step(name="Error", type="tool") as step:
-                step.output = payload.get("error", "Unknown error")
+        # 2) Detail steps for transparency (collapsible by Chainlit)
+        label_map = {
+            "planner_finished":             ("Requisitos extraídos", "llm", "json", payload.get("planner_json", "")),
+            "retrieval_finished":           ("Contexto recuperado", "retrieval", None, payload.get("contexts_summary", "")),
+            "azure_agent_finished":         ("Propuesta Azure", "llm", "markdown", payload.get("proposal", "")),
+            "aws_agent_finished":           ("Propuesta AWS", "llm", "markdown", payload.get("proposal", "")),
+            "gcp_agent_finished":           ("Propuesta GCP", "llm", "markdown", payload.get("proposal", "")),
+            "judge_finished":               ("Comparativa del juez", "llm", "markdown", payload.get("final_comparison", "")),
+        }
+        if event in label_map:
+            name, type_, lang, output = label_map[event]
+            kwargs = {"name": name, "type": type_}
+            if lang:
+                kwargs["language"] = lang
+            async with cl.Step(**kwargs) as step:
+                step.output = output
 
     try:
         result = await run_agent_arena_with_llm_planner_pydantic_async(
@@ -218,50 +139,50 @@ async def on_message(message: cl.Message):
             progress_callback=progress_callback,
             clarification_callback=clarification_callback,
         )
-    finally:
-        await status_msg.remove()
+    except Exception as exc:
+        flow_state.apply_event("error")
+        flow_msg.content = flow_state.render_message() + f"\n\n**Error:** {exc}"
+        await flow_msg.update()
+        raise
 
-    # Store result for follow-up questions
     cl.user_session.set("arena_result", result)
 
-    # Final architecture proposal
-    await cl.Message(content=result.final_architecture_proposal).send()
+    # ---- Structured report ----
+    await cl.Message(content=render_report_header(result)).send()
 
-    # Mermaid diagram
-    if result.mermaid_diagram:
-        await cl.Message(content=f"## Diagrama de Arquitectura\n\n```mermaid\n{result.mermaid_diagram}\n```").send()
+    arch = render_architecture_section(result)
+    if arch:
+        await cl.Message(content=arch).send()
 
-    # Cost comparison
+    await cl.Message(
+        content="## Propuesta detallada\n\n" + result.final_architecture_proposal
+    ).send()
+
     if result.cost_comparison:
-        cost_text = format_cost_comparison(result.cost_comparison)
-        await cl.Message(content=cost_text).send()
+        await cl.Message(content=format_cost_comparison(result.cost_comparison)).send()
 
-    # Evidence trace
     trace = format_evidence_trace(result)
     await cl.Message(content="## Trazabilidad de evidencia\n\n" + trace).send()
 
-    # Rewrite summary
     if result.rewrite_counts:
-        rewrite_text = "## Resumen de reescrituras\n\n"
-        for agent, count in result.rewrite_counts.items():
-            rewrite_text += f"- **{agent.upper()}**: {count} reescritura(s)\n"
+        rewrite_text = "## Reescrituras por validación\n\n" + "\n".join(
+            f"- **{a.upper()}**: {c}" for a, c in result.rewrite_counts.items()
+        )
         await cl.Message(content=rewrite_text).send()
 
-    # Actions for individual proposals
     actions = [
-        cl.Action(name="show_azure", payload={"type": "azure"}, label="Ver propuesta Azure"),
-        cl.Action(name="show_aws", payload={"type": "aws"}, label="Ver propuesta AWS"),
+        cl.Action(name="show_azure", payload={"type": "azure"}, label="Propuesta Azure"),
+        cl.Action(name="show_aws", payload={"type": "aws"}, label="Propuesta AWS"),
     ]
     if result.gcp_proposal:
-        actions.append(cl.Action(name="show_gcp", payload={"type": "gcp"}, label="Ver propuesta GCP"))
-    actions.append(cl.Action(name="show_comparison", payload={"type": "comparison"}, label="Ver comparativa"))
+        actions.append(cl.Action(name="show_gcp", payload={"type": "gcp"}, label="Propuesta GCP"))
+    actions.append(cl.Action(name="show_comparison", payload={"type": "comparison"}, label="Comparativa"))
     actions.append(cl.Action(name="new_project", payload={"type": "new"}, label="Nuevo proyecto"))
 
     await cl.Message(
         content=(
-            "Puedes ver las propuestas individuales o **hacer preguntas de seguimiento** "
-            "(cualquier mensaje sera tratado como follow-up).\n\n"
-            "Para iniciar un nuevo proyecto, usa el boton o escribe *\"nuevo proyecto: [idea]\"*"
+            "Puedes ver propuestas individuales o **preguntar sobre la propuesta**. "
+            "Para empezar otra idea: *\"nuevo proyecto: [idea]\"*."
         ),
         actions=actions,
     ).send()
@@ -269,35 +190,33 @@ async def on_message(message: cl.Message):
 
 @cl.action_callback("show_azure")
 async def show_azure(action: cl.Action):
-    result = cl.user_session.get("arena_result")
-    if result:
-        await cl.Message(content=result.azure_proposal).send()
+    r = cl.user_session.get("arena_result")
+    if r:
+        await cl.Message(content=r.azure_proposal).send()
 
 
 @cl.action_callback("show_aws")
 async def show_aws(action: cl.Action):
-    result = cl.user_session.get("arena_result")
-    if result:
-        await cl.Message(content=result.aws_proposal).send()
+    r = cl.user_session.get("arena_result")
+    if r:
+        await cl.Message(content=r.aws_proposal).send()
 
 
 @cl.action_callback("show_gcp")
 async def show_gcp(action: cl.Action):
-    result = cl.user_session.get("arena_result")
-    if result and result.gcp_proposal:
-        await cl.Message(content=result.gcp_proposal).send()
+    r = cl.user_session.get("arena_result")
+    if r and r.gcp_proposal:
+        await cl.Message(content=r.gcp_proposal).send()
 
 
 @cl.action_callback("show_comparison")
 async def show_comparison(action: cl.Action):
-    result = cl.user_session.get("arena_result")
-    if result:
-        await cl.Message(content=result.final_comparison).send()
+    r = cl.user_session.get("arena_result")
+    if r:
+        await cl.Message(content=r.final_comparison).send()
 
 
 @cl.action_callback("new_project")
 async def new_project(action: cl.Action):
     cl.user_session.set("arena_result", None)
-    await cl.Message(
-        content="Sesion reiniciada. Describe tu nueva idea de proyecto."
-    ).send()
+    await cl.Message(content="Sesión reiniciada. Describe tu nueva idea.").send()
