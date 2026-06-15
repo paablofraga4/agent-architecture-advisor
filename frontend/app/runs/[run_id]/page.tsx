@@ -106,6 +106,19 @@ export default function RunDetailPage({
           </section>
         )}
 
+        {rec.review_notes && (
+          <section className="no-print">
+            <details className="rounded-xl border border-border bg-panel p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-accent">
+                Revisión del arquitecto principal
+              </summary>
+              <div className="mt-3">
+                <Report markdown={rec.review_notes} />
+              </div>
+            </details>
+          </section>
+        )}
+
         <section className="rounded-xl border border-border bg-panel p-5 text-xs text-muted">
           <h3 className="mb-2 text-sm font-semibold text-white">Firma auditable</h3>
           <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">

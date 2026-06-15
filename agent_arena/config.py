@@ -14,13 +14,20 @@ QDRANT_LOCAL_PATH = os.getenv(
 QDRANT_FORCE_LOCAL = os.getenv("QDRANT_FORCE_LOCAL", "false").lower() == "true"
 DEFAULT_MODEL = os.getenv("AGENT_ARENA_MODEL", "gpt-4o-mini")
 
-# Per-agent model overrides (fall back to DEFAULT_MODEL)
+# Reasoning-heavy steps default to a stronger model. The architecture proposals,
+# the judge, the specialists, the adversarial reviewer and the final synthesis
+# read much more like a senior engineer on gpt-4o; the cheaper, more mechanical
+# steps (planner extraction, cost table, diagram syntax) stay on the default.
+REASONING_MODEL = os.getenv("AGENT_ARENA_REASONING_MODEL", "gpt-4o")
+
+# Per-agent model overrides
 PLANNER_MODEL = os.getenv("AGENT_ARENA_PLANNER_MODEL", DEFAULT_MODEL)
-AZURE_AGENT_MODEL = os.getenv("AGENT_ARENA_AZURE_MODEL", DEFAULT_MODEL)
-AWS_AGENT_MODEL = os.getenv("AGENT_ARENA_AWS_MODEL", DEFAULT_MODEL)
-GCP_AGENT_MODEL = os.getenv("AGENT_ARENA_GCP_MODEL", DEFAULT_MODEL)
-JUDGE_MODEL = os.getenv("AGENT_ARENA_JUDGE_MODEL", DEFAULT_MODEL)
-FINAL_MODEL = os.getenv("AGENT_ARENA_FINAL_MODEL", DEFAULT_MODEL)
+AZURE_AGENT_MODEL = os.getenv("AGENT_ARENA_AZURE_MODEL", REASONING_MODEL)
+AWS_AGENT_MODEL = os.getenv("AGENT_ARENA_AWS_MODEL", REASONING_MODEL)
+GCP_AGENT_MODEL = os.getenv("AGENT_ARENA_GCP_MODEL", REASONING_MODEL)
+JUDGE_MODEL = os.getenv("AGENT_ARENA_JUDGE_MODEL", REASONING_MODEL)
+FINAL_MODEL = os.getenv("AGENT_ARENA_FINAL_MODEL", REASONING_MODEL)
+REVIEW_MODEL = os.getenv("AGENT_ARENA_REVIEW_MODEL", REASONING_MODEL)
 COST_MODEL = os.getenv("AGENT_ARENA_COST_MODEL", DEFAULT_MODEL)
 DIAGRAM_MODEL = os.getenv("AGENT_ARENA_DIAGRAM_MODEL", DEFAULT_MODEL)
 

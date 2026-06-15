@@ -17,6 +17,7 @@ from .config import (
     GCP_AGENT_MODEL,
     JUDGE_MODEL,
     FINAL_MODEL,
+    REVIEW_MODEL,
     COST_MODEL,
     DIAGRAM_MODEL,
     GCP_ENABLED,
@@ -39,6 +40,8 @@ from .prompts import (
     build_gcp_agent_prompt_typed,
     build_final_architecture_prompt_typed,
     build_final_rewrite_prompt_typed,
+    build_architect_review_prompt_typed,
+    build_final_revision_prompt_typed,
     build_judge_prompt_typed,
     build_judge_verdict_prompt_typed,
     build_rewrite_prompt_typed,
@@ -547,6 +550,50 @@ async def run_agent_arena_with_llm_planner_pydantic_async(
             agent_name="final_architecture_agent",
         )
 
+        # Adversarial review loop: a principal architect critiques the draft, then the
+        # final agent revises to address every ALTA/MEDIA defect. This is the single
+        # biggest lever for making the output read like senior engineering work.
+        review_notes: str | None = None
+        try:
+            await _emit(progress_callback, "review_started", {})
+            review_model = REVIEW_MODEL if REVIEW_MODEL != model else model
+            review_prompt = build_architect_review_prompt_typed(
+                context_pack=context_pack,
+                draft_proposal=final_architecture_proposal,
+                valid_context_ids=all_valid_ids,
+            )
+            review_notes = await call_llm_async(
+                prompt=review_prompt, model=review_model, trace=run_trace,
+                span_name="architect_review", metadata={"agent": "reviewer"},
+                agent_name="principal_architect_reviewer",
+            )
+            await _emit(progress_callback, "review_finished", {"review": review_notes})
+
+            all_context_block_for_review = format_context_block_typed(
+                context_pack.azure_contexts
+                + context_pack.aws_contexts
+                + context_pack.gcp_contexts
+                + context_pack.neutral_contexts
+            )
+            revision_prompt = build_final_revision_prompt_typed(
+                context_pack=context_pack,
+                draft_proposal=final_architecture_proposal,
+                review_critique=review_notes,
+                valid_context_ids=all_valid_ids,
+                context_block=all_context_block_for_review,
+            )
+            final_architecture_proposal = await call_llm_async(
+                prompt=revision_prompt, model=final_model, trace=run_trace,
+                span_name="final_architecture_revision", metadata={"agent": "final_architecture", "revision": True},
+                agent_name="final_architecture_agent_v2",
+            )
+            await _emit(progress_callback, "revision_finished", {
+                "proposal": final_architecture_proposal,
+            })
+        except Exception as exc:
+            print(f"  [WARN] Adversarial review failed, keeping draft: {exc}")
+            await _emit(progress_callback, "review_error", {"error": str(exc)})
+
         final_validation = validate_citations_typed(
             proposal=final_architecture_proposal, valid_context_ids=all_valid_ids,
         )
@@ -639,6 +686,7 @@ async def run_agent_arena_with_llm_planner_pydantic_async(
             run_id=run_id,
             client_id=client_id,
             specialist_findings=[r.model_dump() for r in specialist_reports],
+            review_notes=review_notes,
         )
 
         # Persist immutable audit snapshot.

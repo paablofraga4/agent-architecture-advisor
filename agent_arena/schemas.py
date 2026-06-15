@@ -226,3 +226,5 @@ class AgentArenaResult(BaseModel):
     client_id: Optional[str] = None
     snapshot_path: Optional[str] = None
     specialist_findings: list = Field(default_factory=list)
+    # Adversarial reviewer critique that drove the final revision (quality loop).
+    review_notes: Optional[str] = None

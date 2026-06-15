@@ -23,9 +23,10 @@ const NODES: { id: string; label: string; sub: string; col: number; row: number 
   { id: "judge",       label: "7. Judge",        sub: "Compara propuestas",    col: 4, row: 1 },
   { id: "specialists", label: "8. Specialists",  sub: "Sec/FinOps/Comp/Data",  col: 5, row: 1 },
   { id: "final",       label: "9. Final Arch.",  sub: "Síntesis con citas",    col: 6, row: 1 },
-  { id: "cost",        label: "10. Cost",        sub: "Costes mensuales",      col: 7, row: 0 },
-  { id: "diagram",     label: "11. Diagram",     sub: "D2 arquitectura",       col: 7, row: 1 },
-  { id: "audit",       label: "12. Audit",       sub: "Snapshot firmado",      col: 7, row: 2 },
+  { id: "review",      label: "10. Revisión",    sub: "Principal architect",   col: 7, row: 1 },
+  { id: "cost",        label: "11. Cost",        sub: "Costes mensuales",      col: 8, row: 0 },
+  { id: "diagram",     label: "12. Diagram",     sub: "D2 arquitectura",       col: 8, row: 1 },
+  { id: "audit",       label: "13. Audit",       sub: "Snapshot firmado",      col: 8, row: 2 },
 ];
 
 const EDGES: [string, string][] = [
@@ -39,9 +40,10 @@ const EDGES: [string, string][] = [
   ["validation", "judge"],
   ["judge", "specialists"],
   ["specialists", "final"],
-  ["final", "cost"],
-  ["final", "diagram"],
-  ["final", "audit"],
+  ["final", "review"],
+  ["review", "cost"],
+  ["review", "diagram"],
+  ["review", "audit"],
 ];
 
 const COL_W = 200;
@@ -142,6 +144,10 @@ export const EVENT_MAP: Record<string, [string, NodeStatus]> = {
   specialists_finished: ["specialists", "done"],
   final_architecture_started: ["final", "running"],
   final_architecture_finished: ["final", "done"],
+  review_started: ["review", "running"],
+  review_finished: ["review", "running"],
+  revision_finished: ["review", "done"],
+  review_error: ["review", "error"],
   cost_estimation_started: ["cost", "running"],
   cost_estimation_finished: ["cost", "done"],
   cost_estimation_error: ["cost", "error"],

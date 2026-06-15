@@ -17,6 +17,7 @@ function RunInner() {
   const [state, setState] = useState<PipelineState>(emptyState());
   const [log, setLog] = useState<string[]>([]);
   const [finalProposal, setFinalProposal] = useState<string>("");
+  const [reviewNotes, setReviewNotes] = useState<string>("");
   const [diagramSrc, setDiagramSrc] = useState<string>("");
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +40,12 @@ function RunInner() {
         }
 
         if (evt.event === "final_architecture_finished" && evt.data?.proposal) {
+          setFinalProposal(evt.data.proposal);
+        }
+        if (evt.event === "review_finished" && evt.data?.review) {
+          setReviewNotes(evt.data.review);
+        }
+        if (evt.event === "revision_finished" && evt.data?.proposal) {
           setFinalProposal(evt.data.proposal);
         }
         if (evt.event === "diagram_generation_finished" && evt.data?.mermaid_diagram) {
@@ -156,6 +163,19 @@ function RunInner() {
         </section>
       )}
       </div>
+
+      {reviewNotes && (
+        <section className="no-print">
+          <details className="rounded-xl border border-border bg-panel p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-accent">
+              Revisión del arquitecto principal
+            </summary>
+            <div className="mt-3">
+              <Report markdown={reviewNotes} />
+            </div>
+          </details>
+        </section>
+      )}
 
       {result?.run_id && (
         <footer className="text-xs text-muted">
