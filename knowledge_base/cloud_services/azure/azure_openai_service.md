@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** ai
 **Tags:** llm, gpt, embeddings, chat, completions
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview)
 - [quotas](https://learn.microsoft.com/en-us/azure/ai-services/openai/quotas-limits)

@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** storage
 **Tags:** object_storage, documents, data_lake
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://cloud.google.com/storage/docs/introduction)
 - [quotas](https://cloud.google.com/storage/quotas)

@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** networking
 **Tags:** api_gateway, rest, openapi
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://cloud.google.com/api-gateway/docs/about-api-gateway)
 - [pricing](https://cloud.google.com/api-gateway/pricing)

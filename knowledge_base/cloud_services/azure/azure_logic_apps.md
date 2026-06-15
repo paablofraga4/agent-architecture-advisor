@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** integration
 **Tags:** workflow, automation, connectors, low_code
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-overview)
 - [limits](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-limits-and-config)

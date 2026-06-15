@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** messaging
 **Tags:** messaging, queues, topics, async
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview)
 - [limits](https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-quotas)

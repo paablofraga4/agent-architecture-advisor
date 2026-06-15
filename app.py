@@ -32,6 +32,7 @@ if sys.version_info >= (3, 14):
 import chainlit as cl
 
 from agent_arena.flow_visualizer import FlowState
+from agent_arena.flow_svg import render_markdown as render_flow_markdown
 from agent_arena.report_renderer import render_report_header, render_architecture_section
 
 
@@ -96,7 +97,7 @@ async def on_message(message: cl.Message):
 
     # ---- Live pipeline flow as a single updating message ----
     flow_state = FlowState()
-    flow_msg = cl.Message(content=flow_state.render_message())
+    flow_msg = cl.Message(content=render_flow_markdown(flow_state))
     await flow_msg.send()
 
     async def clarification_callback(questions, critical_assumptions):
@@ -114,7 +115,7 @@ async def on_message(message: cl.Message):
     async def progress_callback(event: str, payload: dict):
         # 1) Update the live flow message
         if flow_state.apply_event(event):
-            flow_msg.content = flow_state.render_message()
+            flow_msg.content = render_flow_markdown(flow_state)
             await flow_msg.update()
 
         # 2) Detail steps for transparency (collapsible by Chainlit)
@@ -143,7 +144,7 @@ async def on_message(message: cl.Message):
         )
     except Exception as exc:
         flow_state.apply_event("error")
-        flow_msg.content = flow_state.render_message() + f"\n\n**Error:** {exc}"
+        flow_msg.content = render_flow_markdown(flow_state) + f"\n\n**Error:** {exc}"
         await flow_msg.update()
         raise
 

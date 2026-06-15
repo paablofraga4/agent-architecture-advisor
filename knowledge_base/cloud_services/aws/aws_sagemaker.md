@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** ai
 **Tags:** ml, training, inference, endpoints
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://docs.aws.amazon.com/sagemaker/latest/dg/whatis.html)
 - [limits](https://docs.aws.amazon.com/general/latest/gr/sagemaker.html)

@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** storage
 **Tags:** object_storage, documents, data_lake
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html)
 - [limits](https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html)

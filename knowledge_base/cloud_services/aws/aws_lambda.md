@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** compute
 **Tags:** serverless, functions, event_driven
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)
 - [limits](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html)

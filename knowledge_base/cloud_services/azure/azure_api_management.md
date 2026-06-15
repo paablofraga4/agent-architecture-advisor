@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** networking
 **Tags:** api_gateway, rate_limiting, authentication
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://learn.microsoft.com/en-us/azure/api-management/api-management-key-concepts)
 - [limits](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/azure-subscription-service-limits#api-management-limits)

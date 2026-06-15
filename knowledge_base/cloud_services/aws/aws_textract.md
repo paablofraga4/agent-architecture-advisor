@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** ai
 **Tags:** ocr, document_extraction, forms, tables
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://docs.aws.amazon.com/textract/latest/dg/what-is.html)
 - [limits](https://docs.aws.amazon.com/textract/latest/dg/limits.html)

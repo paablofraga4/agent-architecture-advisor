@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** compute
 **Tags:** containers, serverless, microservices, deployment
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://learn.microsoft.com/en-us/azure/container-apps/overview)
 - [limits](https://learn.microsoft.com/en-us/azure/container-apps/quotas)

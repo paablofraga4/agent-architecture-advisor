@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** ai
 **Tags:** ocr, document_extraction, forms, invoices
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/overview)
 - [limits](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/service-limits)

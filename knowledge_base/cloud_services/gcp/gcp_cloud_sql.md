@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** database
 **Tags:** sql, postgresql, mysql, relational
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://cloud.google.com/sql/docs/introduction)
 - [quotas](https://cloud.google.com/sql/docs/quotas)

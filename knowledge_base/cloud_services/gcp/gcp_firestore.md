@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** database
 **Tags:** nosql, document, realtime, serverless
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://cloud.google.com/firestore/docs/overview)
 - [limits](https://cloud.google.com/firestore/quotas)

@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** messaging
 **Tags:** messaging, event_driven, streaming
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://cloud.google.com/pubsub/docs/overview)
 - [quotas](https://cloud.google.com/pubsub/quotas)

@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** search
 **Tags:** search, vector, hybrid, analytics, logs
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html)
 - [limits](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/limits.html)

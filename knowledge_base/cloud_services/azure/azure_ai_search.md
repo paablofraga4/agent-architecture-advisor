@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** search
 **Tags:** search, vector, hybrid, rag, semantic_ranking
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search)
 - [limits](https://learn.microsoft.com/en-us/azure/search/search-limits-quotas-capacity)

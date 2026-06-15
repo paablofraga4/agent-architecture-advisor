@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** networking
 **Tags:** api_gateway, rest, websocket
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
 - [limits](https://docs.aws.amazon.com/apigateway/latest/developerguide/limits.html)

@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** compute
 **Tags:** containers, serverless, deployment
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://cloud.google.com/run/docs/overview/what-is-cloud-run)
 - [limits](https://cloud.google.com/run/quotas)

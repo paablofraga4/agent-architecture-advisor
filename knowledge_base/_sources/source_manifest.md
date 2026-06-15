@@ -1,6 +1,6 @@
 # Knowledge Base Source Manifest
 
-Generated: 2026-06-10 16:43 UTC
+Generated: 2026-06-15 10:02 UTC
 
 Every document in the knowledge base is derived from the official sources listed below.
 No content is invented or hallucinated — all facts are traceable to these URLs.

@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** compute
 **Tags:** serverless, functions, event_driven
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://cloud.google.com/functions/docs/concepts/overview)
 - [limits](https://cloud.google.com/functions/quotas)

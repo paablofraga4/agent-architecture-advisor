@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** ai
 **Tags:** llm, gemini, ml, agents, search
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://cloud.google.com/vertex-ai/docs/start/introduction-unified-platform)
 - [quotas](https://cloud.google.com/vertex-ai/docs/quotas)

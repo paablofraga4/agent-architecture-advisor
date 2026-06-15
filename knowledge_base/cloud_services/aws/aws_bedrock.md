@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** ai
 **Tags:** llm, foundation_models, agents, rag, knowledge_bases
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html)
 - [quotas](https://docs.aws.amazon.com/bedrock/latest/userguide/quotas.html)

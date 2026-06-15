@@ -50,14 +50,26 @@ def render_report_header(result: AgentArenaResult) -> str:
 """
 
 
+def _kroki_url(mermaid_src: str, fmt: str = "svg") -> str:
+    """Render Mermaid via kroki.io as an inline image URL.
+    Uses zlib + url-safe base64 (kroki's expected encoding).
+    """
+    import base64, zlib
+    compressed = zlib.compress(mermaid_src.encode("utf-8"), 9)
+    encoded = base64.urlsafe_b64encode(compressed).decode("ascii")
+    return f"https://kroki.io/mermaid/{fmt}/{encoded}"
+
+
 def render_architecture_section(result: AgentArenaResult) -> str:
     if not result.mermaid_diagram:
         return ""
+    url = _kroki_url(result.mermaid_diagram)
     return (
         "## Arquitectura propuesta\n\n"
-        "```mermaid\n"
-        f"{result.mermaid_diagram}\n"
-        "```\n"
+        f"![Arquitectura]({url})\n\n"
+        "<details><summary>Ver código Mermaid</summary>\n\n"
+        f"```mermaid\n{result.mermaid_diagram}\n```\n\n"
+        "</details>\n"
     )
 
 

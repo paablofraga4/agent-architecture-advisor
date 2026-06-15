@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** ai
 **Tags:** ocr, document_extraction, forms
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://cloud.google.com/document-ai/docs/overview)
 - [quotas](https://cloud.google.com/document-ai/quotas)

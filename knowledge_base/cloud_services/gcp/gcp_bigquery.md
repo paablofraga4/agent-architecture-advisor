@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** analytics
 **Tags:** analytics, data_warehouse, sql, vector_search
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://cloud.google.com/bigquery/docs/introduction)
 - [quotas](https://cloud.google.com/bigquery/quotas)

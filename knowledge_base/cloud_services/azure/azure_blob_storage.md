@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** storage
 **Tags:** object_storage, documents, blobs
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview)
 - [limits](https://learn.microsoft.com/en-us/azure/storage/common/scalability-targets-standard-account)

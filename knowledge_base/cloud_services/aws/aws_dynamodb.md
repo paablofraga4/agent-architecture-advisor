@@ -4,7 +4,7 @@
 **Document type:** service_reference
 **Category:** database
 **Tags:** nosql, key_value, serverless
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-15
 **Sources:**
 - [overview](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
 - [limits](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ServiceQuotas.html)
