@@ -265,32 +265,48 @@ COMPARISON ALREADY PRODUCED:
 TASK:
 Score each provider 0-100 on overall fit for THIS user idea and THIS business context.
 
-CRITICAL — be honest about ties. Most generic projects (web apps, APIs, basic RAG,
-CRUD, dashboards) can be solved equally well by all three providers. In those cases
-the gap should be SMALL (under 10 pts). Only declare a clear winner when there is
-a real differentiator: explicit cloud preference in the business context, regulatory
-constraint (EU residency, specific certifications), deep ecosystem lock-in (M365 →
-Azure, Google Workspace → GCP, existing AWS Organization), or a service one cloud
-genuinely does better (e.g. Vertex AI Search for very large corpora, Bedrock for
-some Anthropic models, Azure OpenAI for GPT-4 with EU residency).
+Be objective. Do not bias toward declaring a winner, and do not bias toward declaring
+a tie. Score honestly using the rubric below and let the gap fall where it falls.
 
-If you cannot point to such a differentiator, the verdict MUST be "tie" or
-"close_tie". Do not invent score gaps to justify a "clear" verdict.
+SCORING RUBRIC — score each provider in these four dimensions (0-25 each), then sum
+to get the total 0-100:
+
+1. **Native fit with the stated business context** (0-25):
+   Existing ecosystem (e.g. M365 → Azure), explicit preferences in business_context,
+   stated constraints (residency, certifications). Score 0 if not aligned, 25 if
+   strongly aligned. If the context is silent, all three score the same here.
+
+2. **Service depth for the required capabilities** (0-25):
+   For each required_capability, does the provider have a first-class managed service?
+   Score how complete and mature that coverage is. If all three have equivalent
+   managed services, scores should be close.
+
+3. **Cost profile vs project scale** (0-25):
+   Based on the proposals' components and any explicit cost constraints. If the
+   project is small / MVP and all three offer comparable free tiers and pay-as-you-go,
+   scores should be close.
+
+4. **Operational complexity for this team** (0-25):
+   Number of services to manage, skills needed, vendor lock-in, observability story.
+   If the proposals are similar in complexity, scores should be close.
+
+After scoring, the gap and confidence emerge naturally. Do not adjust scores
+to hit a target verdict.
 
 Return ONLY a JSON object, no Markdown, no explanation outside JSON.
 
-CONFIDENCE RULES (derive automatically from your scores):
-- "clear":     winner is >= 20 points above the best runner-up.
-- "close_tie": winner is 5-19 points above the best runner-up.
-- "tie":       winner is < 5 points above the best runner-up.
+CONFIDENCE RULES (derived from the gap between winner and best runner-up):
+- "clear":     gap >= 20 points.
+- "close_tie": gap 5-19 points.
+- "tie":       gap < 5 points.
 
 EXACT JSON SHAPE:
 {{
   "winner": "azure" | "aws" | "gcp",
   "confidence": "clear" | "close_tie" | "tie",
   "score_gap": <int 0-100, gap winner vs best runner-up>,
-  "runners_up_within_gap": [<providers within 14 points of winner, from {providers}>],
-  "reasoning_summary": "<one short sentence — why this verdict>"
+  "runners_up_within_gap": [<providers within 19 points of winner, from {providers}>],
+  "reasoning_summary": "<one short sentence — the single biggest reason for the winner's lead, or why it's a tie>"
 }}
 """
 
