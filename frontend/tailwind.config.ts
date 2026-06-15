@@ -10,7 +10,7 @@ const config: Config = {
         panel: "#111827",
         border: "#1f2937",
         muted: "#9ca3af",
-        accent: "#0ea5e9",
+        accent: "rgb(var(--accent) / <alpha-value>)",
         ok: "#10b981",
         warn: "#f59e0b",
         err: "#ef4444",

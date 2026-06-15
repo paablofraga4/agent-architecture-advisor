@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import PipelineGraph, { EVENT_MAP, emptyState, PipelineState } from "@/components/PipelineGraph";
 import Report from "@/components/Report";
 import ArchitectureImage from "@/components/ArchitectureImage";
+import ExportBar from "@/components/ExportBar";
 import { streamArenaRun } from "@/lib/sse";
 
 function RunInner() {
@@ -65,15 +66,26 @@ function RunInner() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl border border-border bg-panel p-4">
-        <div className="text-xs text-muted">Cliente: {clientId}</div>
-        <div className="text-sm">{idea}</div>
+      <section className="no-print flex items-start justify-between gap-4 rounded-xl border border-border bg-panel p-4">
+        <div>
+          <div className="text-xs text-muted">Workspace: {clientId}</div>
+          <div className="text-sm">{idea}</div>
+        </div>
+        {finalProposal && (
+          <ExportBar
+            markdown={finalProposal}
+            baseName={`recomendacion-${clientId}-${result?.run_id || "draft"}`}
+            json={result ?? undefined}
+          />
+        )}
       </section>
 
-      <section>
+      <section className="no-print">
         <h2 className="text-lg font-semibold mb-2">Pipeline en vivo</h2>
         <PipelineGraph state={state} />
       </section>
+
+      <div className="print-area space-y-6">
 
       {result?.verdict && (
         <section className="rounded-xl border border-border bg-panel p-5">
@@ -135,6 +147,7 @@ function RunInner() {
           </div>
         </section>
       )}
+      </div>
 
       {result?.run_id && (
         <footer className="text-xs text-muted">
