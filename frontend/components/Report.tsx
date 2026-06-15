@@ -50,8 +50,21 @@ function mapText(
   return node;
 }
 
+/**
+ * LLMs sometimes wrap the entire answer in a ```markdown … ``` fence, which
+ * makes react-markdown render the whole document as one monospaced code block.
+ * Strip a single fence that wraps the full content.
+ */
+function stripWrappingFence(md: string): string {
+  const trimmed = md.trim();
+  const m = trimmed.match(/^```(?:markdown|md)?\s*\n([\s\S]*?)\n?```$/i);
+  if (m) return m[1].trim();
+  return md;
+}
+
 export default function Report({ markdown }: { markdown: string }) {
   if (!markdown) return null;
+  const clean = stripWrappingFence(markdown);
   return (
     <div className="report-md panel-card rounded-2xl border border-border bg-panel p-6 md:p-8">
       <ReactMarkdown
@@ -63,7 +76,7 @@ export default function Report({ markdown }: { markdown: string }) {
           td: ({ children }) => <td>{withCitationChips(children)}</td>,
         }}
       >
-        {markdown}
+        {clean}
       </ReactMarkdown>
     </div>
   );
