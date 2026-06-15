@@ -4,11 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { listRuns, RunSummary } from "@/lib/api";
-import { useWorkspace } from "@/lib/workspace";
 
 export default function RunsPage() {
-  const { workspace } = useWorkspace();
-  const [allWorkspaces, setAllWorkspaces] = useState(false);
   const [runs, setRuns] = useState<RunSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,14 +15,14 @@ export default function RunsPage() {
     setLoading(true);
     setError(null);
     try {
-      const r = await listRuns(allWorkspaces ? undefined : workspace.id);
+      const r = await listRuns();
       setRuns(r);
     } catch (e) {
       setError(String(e));
     } finally {
       setLoading(false);
     }
-  }, [allWorkspaces, workspace.id]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -35,21 +32,9 @@ export default function RunsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Historial de runs</h1>
-        <label className="flex items-center gap-2 text-sm text-muted">
-          <input
-            type="checkbox"
-            checked={allWorkspaces}
-            onChange={(e) => setAllWorkspaces(e.target.checked)}
-          />
-          Ver todos los workspaces
-        </label>
       </div>
 
-      <p className="text-sm text-muted">
-        {allWorkspaces
-          ? "Mostrando runs de todos los workspaces."
-          : `Mostrando runs del workspace ${workspace.name}.`}
-      </p>
+      <p className="text-sm text-muted">Tus recomendaciones generadas.</p>
 
       {error && <div className="text-err text-sm">{error}</div>}
       {loading && <div className="text-muted text-sm">Cargando…</div>}

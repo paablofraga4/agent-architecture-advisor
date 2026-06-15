@@ -41,7 +41,7 @@ export default function Home() {
 
   const submit = () => {
     if (!idea.trim()) return;
-    const params = new URLSearchParams({ idea, client_id: workspace.id });
+    const params = new URLSearchParams({ idea });
     router.push(`/run?${params.toString()}`);
   };
 

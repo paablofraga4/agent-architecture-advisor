@@ -1,22 +1,42 @@
-import { API_BASE } from "./api";
+import { API_BASE, getAccessToken, QuotaError } from "./api";
 
 export type SseEvent = { event: string; data: any };
 
 /**
  * POST-based SSE. EventSource only supports GET, so we use fetch + ReadableStream
  * to parse the text/event-stream body coming from /arena/run.
+ *
+ * The tenant (client_id) is derived server-side from the auth token, so the body
+ * only carries the idea + optional model override.
  */
 export async function streamArenaRun(
-  body: { idea: string; client_id?: string; model?: string },
+  body: { idea: string; model?: string },
   onEvent: (e: SseEvent) => void,
   signal?: AbortSignal
 ) {
+  const token = await getAccessToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "text/event-stream",
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const r = await fetch(`${API_BASE}/arena/run`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    headers,
     body: JSON.stringify(body),
     signal,
   });
+  if (r.status === 402) {
+    let detail: any = null;
+    try {
+      detail = (await r.json())?.detail;
+    } catch {
+      /* ignore */
+    }
+    throw new QuotaError(detail);
+  }
+  if (!r.ok) throw new Error(`run failed: ${r.status}`);
   if (!r.body) throw new Error("No response body");
 
   const reader = r.body.getReader();

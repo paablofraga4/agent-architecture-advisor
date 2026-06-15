@@ -450,6 +450,9 @@ OUTPUT FORMAT (respeta EXACTAMENTE estos títulos, con sus tildes):
 ## 9. Roadmap de implementación
 
 FORMATTING RULES:
+- Devuelve SOLO Markdown plano. NO envuelvas la respuesta en vallas de código
+  (nada de ```markdown ni ``` al principio o al final). El documento empieza
+  directamente por el encabezado "# ...".
 - Usa español correcto con tildes y signos de apertura (¿ ¡) en todo el texto.
 - En la sección 3, usa una lista con viñetas donde cada componente va en **negrita**
   seguido de una frase de una línea. No dejes líneas en blanco entre viñetas.
@@ -529,6 +532,8 @@ RULES:
    concrete (numbers, ranges, units). Mark assumptions as "(supuesto)".
 4. Address every HIGH specialist finding explicitly.
 5. Write in Spanish, executive and decision-oriented. Keep correct accents and ¿¡.
+6. Return ONLY plain Markdown. Do NOT wrap the answer in code fences (no ```markdown
+   or ``` at the start or end). The document must begin directly with "# ...".
 
 VALID CONTEXT:
 {context_block}

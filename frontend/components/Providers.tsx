@@ -2,7 +2,12 @@
 
 import type { ReactNode } from "react";
 import { WorkspaceProvider } from "@/lib/workspace";
+import { AuthProvider } from "@/lib/auth";
 
 export default function Providers({ children }: { children: ReactNode }) {
-  return <WorkspaceProvider>{children}</WorkspaceProvider>;
+  return (
+    <AuthProvider>
+      <WorkspaceProvider>{children}</WorkspaceProvider>
+    </AuthProvider>
+  );
 }

@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { uploadDoc } from "@/lib/api";
-import { useWorkspace } from "@/lib/workspace";
 
 export default function KbPage() {
-  const { workspace } = useWorkspace();
   const [file, setFile] = useState<File | null>(null);
-  const clientId = workspace.id;
   const [docType, setDocType] = useState("project_case");
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -20,7 +17,7 @@ export default function KbPage() {
     setStatus(null);
     setError(null);
     try {
-      const r = await uploadDoc(file, clientId, docType, title || undefined);
+      const r = await uploadDoc(file, docType, title || undefined);
       setStatus(
         `✅ Guardado en ${r.ingest?.path} (${r.ingest?.chars} chars). ${r.reindex?.message || ""}`
       );
@@ -39,11 +36,8 @@ export default function KbPage() {
       </p>
 
       <div className="space-y-3 rounded-xl border border-border bg-panel p-5">
-        <div className="rounded-lg border border-border bg-bg px-3 py-2 text-sm">
-          <span className="text-muted">Workspace: </span>
-          <span className="font-medium text-accent">{workspace.name}</span>
-          <span className="text-muted"> · client_id </span>
-          <code className="font-mono">{clientId}</code>
+        <div className="rounded-lg border border-border bg-bg px-3 py-2 text-sm text-muted">
+          Los documentos se asocian a tu cuenta.
         </div>
         <div>
           <label className="text-sm text-muted block mb-1">Tipo de documento</label>

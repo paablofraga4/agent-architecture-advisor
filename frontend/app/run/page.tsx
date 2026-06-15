@@ -8,6 +8,8 @@ import ArchitectureImage from "@/components/ArchitectureImage";
 import ExportBar from "@/components/ExportBar";
 import ReportBrandHeader from "@/components/ReportBrandHeader";
 import { streamArenaRun } from "@/lib/sse";
+import { QuotaError } from "@/lib/api";
+import Link from "next/link";
 
 function RunInner() {
   const params = useSearchParams();
@@ -21,6 +23,7 @@ function RunInner() {
   const [diagramSrc, setDiagramSrc] = useState<string>("");
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [quotaBlocked, setQuotaBlocked] = useState(false);
   const [done, setDone] = useState(false);
 
   const startedRef = useRef(false);
@@ -30,7 +33,7 @@ function RunInner() {
     const ctrl = new AbortController();
 
     streamArenaRun(
-      { idea, client_id: clientId },
+      { idea },
       (evt) => {
         setLog((l) => [...l, `[${evt.event}]`]);
 
@@ -66,11 +69,38 @@ function RunInner() {
     ).catch((e) => {
       // React StrictMode double-mounts in dev — ignore the resulting abort.
       if (e?.name === "AbortError" || String(e).includes("aborted")) return;
+      if (e instanceof QuotaError) {
+        setQuotaBlocked(true);
+        return;
+      }
       setError(String(e));
     });
 
     return () => ctrl.abort();
   }, [idea, clientId]);
+
+  if (quotaBlocked) {
+    return (
+      <div className="mx-auto max-w-lg space-y-4 rounded-2xl border border-border bg-panel p-8 text-center">
+        <h1 className="text-2xl font-semibold">Has usado tu prueba gratuita</h1>
+        <p className="text-sm text-muted">
+          Tu primera recomendación es gratis. Para seguir generando arquitecturas,
+          escríbenos y te damos acceso ampliado.
+        </p>
+        <a
+          href="mailto:pf.pablofraga@gmail.com?subject=Acceso%20Architecture%20Advisor"
+          className="inline-block rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white"
+        >
+          Solicitar acceso
+        </a>
+        <div>
+          <Link href="/runs" className="text-sm text-accent">
+            Ver mis runs anteriores
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

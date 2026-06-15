@@ -1,0 +1,13 @@
+frontend
+node_modules
+.next
+.git
+data/qdrant_local
+data/runs
+__pycache__
+**/__pycache__
+*.pyc
+.env
+notebooks
+.hf
+.venv

@@ -1,3 +1,9 @@
+# Prod-like local stack: Qdrant server + FastAPI backend.
+# The Next.js frontend runs separately (npm run dev / Vercel).
+#
+#   docker compose up --build
+#   # then index the KB into the server once:
+#   docker compose exec api python ingest_and_index.py
 services:
   qdrant:
     image: qdrant/qdrant
@@ -7,6 +13,27 @@ services:
       - "6334:6334"
     volumes:
       - qdrant_storage:/qdrant/storage
+
+  api:
+    build: .
+    container_name: agent-arena-api
+    depends_on:
+      - qdrant
+    ports:
+      - "8080:8080"
+    environment:
+      # Point the arena at the Qdrant server (not embedded mode).
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: "6333"
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Auth (leave unset for local OPEN mode):
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    volumes:
+      - ./data:/app/data
+      - ./knowledge_base:/app/knowledge_base
 
 volumes:
   qdrant_storage:
