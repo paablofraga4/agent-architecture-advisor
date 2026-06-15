@@ -6,6 +6,7 @@ import PipelineGraph, { EVENT_MAP, emptyState, PipelineState } from "@/component
 import Report from "@/components/Report";
 import ArchitectureImage from "@/components/ArchitectureImage";
 import ExportBar from "@/components/ExportBar";
+import ReportBrandHeader from "@/components/ReportBrandHeader";
 import { streamArenaRun } from "@/lib/sse";
 
 function RunInner() {
@@ -86,6 +87,13 @@ function RunInner() {
       </section>
 
       <div className="print-area space-y-6">
+      {finalProposal && (
+        <ReportBrandHeader
+          workspaceId={clientId}
+          subtitle={idea}
+          runId={result?.run_id}
+        />
+      )}
 
       {result?.verdict && (
         <section className="rounded-xl border border-border bg-panel p-5">

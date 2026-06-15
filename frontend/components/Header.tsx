@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { WORKSPACES, useWorkspace } from "@/lib/workspace";
+import BrandMark from "@/components/BrandMark";
 
 const NAV = [
   { href: "/", label: "Advisor" },
@@ -52,12 +53,7 @@ export default function Header() {
             onClick={() => setOpen((o) => !o)}
             className="flex items-center gap-2 rounded-lg border border-border bg-bg px-2 py-1.5 text-sm hover:border-accent"
           >
-            <span
-              className="grid h-6 w-6 place-items-center rounded-full text-[10px] font-bold text-bg"
-              style={{ backgroundColor: "rgb(var(--accent))" }}
-            >
-              {workspace.initials}
-            </span>
+            <BrandMark workspace={workspace} size={26} />
             <span className="hidden sm:block text-left leading-tight">
               <span className="block">{workspace.name}</span>
               <span className="block text-[10px] text-muted">{workspace.plan}</span>
@@ -86,12 +82,7 @@ export default function Header() {
                       w.id === workspace.id ? "bg-bg" : ""
                     }`}
                   >
-                    <span
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold text-bg"
-                      style={{ backgroundColor: `rgb(${w.accentRgb})` }}
-                    >
-                      {w.initials}
-                    </span>
+                    <BrandMark workspace={w} size={32} className="shrink-0" />
                     <span className="min-w-0">
                       <span className="block text-sm">{w.name}</span>
                       <span className="block truncate text-xs text-muted">

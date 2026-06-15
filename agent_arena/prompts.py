@@ -374,27 +374,34 @@ STRICT RULES:
     be addressed in section 3 (architecture) or section 7 (risks). Mention which
     finding you are addressing.
 
-OUTPUT FORMAT:
+OUTPUT FORMAT (respeta EXACTAMENTE estos títulos, con sus tildes):
 
 # Propuesta Final de Arquitectura
 
-## 1. Recomendacion ejecutiva
+## 1. Recomendación ejecutiva
 
-## 2. Por que se selecciono esta opcion
+## 2. Por qué se seleccionó esta opción
 
 ## 3. Arquitectura objetivo
 
 ## 4. Flujo end-to-end
 
-## 5. Version MVP
+## 5. Versión MVP
 
-## 6. Version produccion
+## 6. Versión producción
 
 ## 7. Riesgos y trade-offs
 
-## 8. Informacion faltante
+## 8. Información faltante
 
-## 9. Roadmap de implementacion
+## 9. Roadmap de implementación
+
+FORMATTING RULES:
+- Usa español correcto con tildes y signos de apertura (¿ ¡) en todo el texto.
+- En la sección 3, usa una lista con viñetas donde cada componente va en **negrita**
+  seguido de una frase de una línea. No dejes líneas en blanco entre viñetas.
+- En las secciones 4 y 9 usa listas numeradas.
+- Las citas [CTX-XXXX] van pegadas al final de la frase que justifican, antes del punto.
 """
 
 

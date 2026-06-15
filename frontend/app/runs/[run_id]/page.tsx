@@ -6,6 +6,7 @@ import { getRun } from "@/lib/api";
 import Report from "@/components/Report";
 import ArchitectureImage from "@/components/ArchitectureImage";
 import ExportBar from "@/components/ExportBar";
+import ReportBrandHeader from "@/components/ReportBrandHeader";
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -65,6 +66,12 @@ export default function RunDetailPage({
       </div>
 
       <div className="print-area space-y-6">
+        <ReportBrandHeader
+          workspaceId={rec.client_id}
+          subtitle={summary.project_summary}
+          runId={rec.run_id}
+          date={rec.timestamp_utc}
+        />
         <section className="rounded-xl border border-border bg-panel p-5">
           <h2 className="mb-3 text-lg font-semibold">{summary.project_summary}</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
