@@ -11,42 +11,48 @@ from .flow_visualizer import FlowState
 
 # Layout grid (col, row) for each pipeline node id.
 LAYOUT: dict[str, tuple[int, int]] = {
-    "planner":    (0, 1),
-    "retrieval":  (1, 1),
-    "azure":      (2, 0),
-    "aws":        (2, 1),
-    "gcp":        (2, 2),
-    "validation": (3, 1),
-    "judge":      (4, 1),
-    "final":      (5, 1),
-    "cost":       (6, 0),
-    "diagram":    (6, 2),
+    "planner":     (0, 1),
+    "retrieval":   (1, 1),
+    "azure":       (2, 0),
+    "aws":         (2, 1),
+    "gcp":         (2, 2),
+    "validation":  (3, 1),
+    "judge":       (4, 1),
+    "specialists": (5, 1),
+    "final":       (6, 1),
+    "cost":        (7, 0),
+    "diagram":     (7, 1),
+    "audit":       (7, 2),
 }
 
 LABELS: dict[str, str] = {
-    "planner":    "1. Planner",
-    "retrieval":  "2. Retrieval",
-    "azure":      "3. Azure",
-    "aws":        "4. AWS",
-    "gcp":        "5. GCP",
-    "validation": "6. Validator",
-    "judge":      "7. Judge",
-    "final":      "8. Final Architecture",
-    "cost":       "9. Cost",
-    "diagram":    "10. Diagram",
+    "planner":     "1. Planner",
+    "retrieval":   "2. Retrieval",
+    "azure":       "3. Azure",
+    "aws":         "4. AWS",
+    "gcp":         "5. GCP",
+    "validation":  "6. Validator",
+    "judge":       "7. Judge",
+    "specialists": "8. Specialists",
+    "final":       "9. Final Arch.",
+    "cost":        "10. Cost",
+    "diagram":     "11. Diagram",
+    "audit":       "12. Audit",
 }
 
 SUBLABELS: dict[str, str] = {
-    "planner":    "Extrae requisitos",
-    "retrieval":  "Qdrant + reranker",
-    "azure":      "Propuesta cloud",
-    "aws":        "Propuesta cloud",
-    "gcp":        "Propuesta cloud",
-    "validation": "Verifica citas",
-    "judge":      "Compara propuestas",
-    "final":      "Síntesis con citas",
-    "cost":       "Costes mensuales",
-    "diagram":    "Mermaid arquitectura",
+    "planner":     "Extrae requisitos",
+    "retrieval":   "Qdrant + reranker",
+    "azure":       "Propuesta cloud",
+    "aws":         "Propuesta cloud",
+    "gcp":         "Propuesta cloud",
+    "validation":  "Verifica citas",
+    "judge":       "Compara propuestas",
+    "specialists": "Sec / FinOps / Comp / Data",
+    "final":       "Síntesis con citas",
+    "cost":        "Costes mensuales",
+    "diagram":     "D2 arquitectura",
+    "audit":       "Snapshot firmado",
 }
 
 EDGES: list[tuple[str, str]] = [
@@ -58,9 +64,11 @@ EDGES: list[tuple[str, str]] = [
     ("aws", "validation"),
     ("gcp", "validation"),
     ("validation", "judge"),
-    ("judge", "final"),
+    ("judge", "specialists"),
+    ("specialists", "final"),
     ("final", "cost"),
     ("final", "diagram"),
+    ("final", "audit"),
 ]
 
 STATE_STYLE = {
@@ -77,7 +85,7 @@ NODE_W = 140
 NODE_H = 64
 PAD_X = 24
 PAD_Y = 24
-COLS = 7
+COLS = 8
 ROWS = 3
 SVG_W = PAD_X * 2 + COL_W * (COLS - 1) + NODE_W
 SVG_H = PAD_Y * 2 + ROW_H * (ROWS - 1) + NODE_H

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Awaitable, Callable, Optional, Any
 import asyncio
+import time
 
 from .schemas import (
     AgentArenaResult,
@@ -46,6 +47,13 @@ from .prompts import (
 from .validators import get_valid_context_ids_typed, validate_citations_typed
 from .cost_estimator import estimate_costs_async
 from .diagram import generate_diagram_async
+from .specialists import (
+    run_all_specialists_async,
+    render_specialist_block_for_final,
+)
+from .audit import build_snapshot, save_snapshot, new_run_id
+from .memory import enrich_business_context_with_memory
+from .llm import DETERMINISTIC_SEED, DETERMINISTIC_TEMPERATURE
 from .llm import (
     call_llm_async,
     _lf_end,
@@ -271,12 +279,20 @@ async def run_agent_arena_with_llm_planner_pydantic_async(
     business_context: BusinessContext = DEFAULT_BUSINESS_CONTEXT,
     progress_callback: Optional[ProgressCallback] = None,
     clarification_callback: Optional[ClarificationCallback] = None,
+    client_id: Optional[str] = None,
 ) -> AgentArenaResult:
     """
     Full Agent Arena pipeline with Azure, AWS, and optionally GCP agents.
-    Includes interactive planner, cost estimation, diagram generation, and retry limits.
+    Includes interactive planner, cost estimation, diagram generation, retry limits,
+    specialist debate (security/finops/compliance/data), client memory, and
+    reproducible audit snapshot.
     """
     rewrite_counts = {}
+    run_id = new_run_id()
+    run_started_at = time.time()
+
+    # Inject memory from previous runs of the same client into the business_context.
+    business_context = enrich_business_context_with_memory(business_context, client_id)
 
     run_trace = _lf_start_trace(
         name="agent_arena_run",
@@ -494,6 +510,26 @@ async def run_agent_arena_with_llm_planner_pydantic_async(
             print(f"  [WARN] Verdict parsing failed: {exc}")
             await _emit(progress_callback, "verdict_error", {"error": str(exc)})
 
+        # Specialist debate (Security / FinOps / Compliance / Data) in parallel.
+        await _emit(progress_callback, "specialists_started", {})
+        specialist_reports = await run_all_specialists_async(
+            context_pack=context_pack,
+            azure_proposal=azure_proposal,
+            aws_proposal=aws_proposal,
+            gcp_proposal=gcp_proposal,
+            model=judge_model,
+            trace=run_trace,
+        )
+        await _emit(progress_callback, "specialists_finished", {
+            "count": len(specialist_reports),
+            "findings_total": sum(len(r.findings) for r in specialist_reports),
+            "summary": "\n".join(
+                f"- {r.agent}: {len(r.findings)} findings — {r.overall_concern}"
+                for r in specialist_reports
+            ),
+        })
+        specialist_block = render_specialist_block_for_final(specialist_reports)
+
         # Final architecture
         await _emit(progress_callback, "final_architecture_started", {})
         final_model = FINAL_MODEL if FINAL_MODEL != model else model
@@ -503,6 +539,7 @@ async def run_agent_arena_with_llm_planner_pydantic_async(
             aws_proposal=aws_proposal,
             final_comparison=final_comparison,
             gcp_proposal=gcp_proposal,
+            specialist_block=specialist_block,
         )
         final_architecture_proposal = await call_llm_async(
             prompt=final_architecture_prompt, model=final_model, trace=run_trace,
@@ -599,7 +636,37 @@ async def run_agent_arena_with_llm_planner_pydantic_async(
             mermaid_diagram=mermaid_diagram,
             rewrite_counts=rewrite_counts,
             verdict=verdict,
+            run_id=run_id,
+            client_id=client_id,
+            specialist_findings=[r.model_dump() for r in specialist_reports],
         )
+
+        # Persist immutable audit snapshot.
+        try:
+            snapshot = build_snapshot(
+                run_id=run_id,
+                user_idea=user_idea,
+                model=model,
+                seed=DETERMINISTIC_SEED,
+                temperature=DETERMINISTIC_TEMPERATURE,
+                started_at=run_started_at,
+                finished_at=time.time(),
+                client_id=client_id or "default",
+                result=result,
+            )
+            # Attach specialist findings to the snapshot.
+            snapshot["specialist_findings"] = result.specialist_findings
+            snapshot_path = save_snapshot(snapshot)
+            result.snapshot_path = str(snapshot_path)
+            await _emit(progress_callback, "audit_saved", {
+                "run_id": run_id,
+                "path": str(snapshot_path),
+                "kb_hash": snapshot["execution"]["kb_hash"][:12],
+                "prompts_hash": snapshot["execution"]["prompts_hash"][:12],
+            })
+        except Exception as exc:
+            print(f"  [WARN] Audit snapshot failed: {exc}")
+            await _emit(progress_callback, "audit_error", {"error": str(exc)})
 
         _lf_update(
             run_trace,

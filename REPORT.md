@@ -69,6 +69,61 @@ Nuevas reglas en el prompt del agente de diagramas:
 
 ---
 
+## 3.5 Mejoras V2 (puntos 2-7 del roadmap)
+
+### P2 — Debate real con 4 agentes especialistas (`agent_arena/specialists.py`)
+Tras las propuestas Azure/AWS/GCP, se lanzan 4 agentes en paralelo que critican las 3 propuestas desde ángulos ortogonales:
+- 🛡️ **Security** — IAM, secretos, perimeter, encryption.
+- 💰 **FinOps** — TCO 3 años, idle, egress, cost drivers no obvios.
+- ⚖️ **Compliance** — GDPR, HIPAA, residencia, retention.
+- 🗄️ **Data** — lineage, calidad, governance.
+
+Cada uno devuelve `SpecialistReport` con `findings[]` (severity high/medium/low, topic, applies_to, issue, recommendation). Los hallazgos se inyectan al Final Architecture Agent que **debe abordar todo HIGH** en sus secciones 3 (arquitectura) o 7 (riesgos). Eso es debate real, no propuestas paralelas.
+
+### P3 — Auditoría reproducible (`agent_arena/audit.py`)
+Cada run genera un snapshot inmutable en `data/runs/<run_id>.json` con:
+- `prompts_hash` (SHA256 de los .py de prompts)
+- `kb_hash` (SHA256 de todos los .md del knowledge_base)
+- `model`, `seed`, `temperature`, `timestamp`, `duration`
+- propuesta final, veredicto, citas, findings, validación
+- `signature_sha256` sobre el conjunto canonicalizado
+
+`verify_snapshot()` recomputa la firma. Cualquier modificación posterior se detecta. Auditabilidad lista para BFSI/pharma/health.
+
+### P5 — Memoria por cliente (`agent_arena/memory.py`)
+`/cliente <nombre>` fija el `client_id` de la sesión. En cada run, `enrich_business_context_with_memory()` carga los últimos 5 snapshots de ese cliente y los inyecta como bullets en `business_context.notes`:
+```
+Decisiones previas para este cliente (no las contradigas sin justificación nueva):
+- [run_id] Project A RAG → recomendado: AZURE (clear)
+- [run_id] Project B fraud → recomendado: AWS (close_tie)
+```
+Coherencia entre proyectos del mismo cliente.
+
+### P6 — Evaluación continua (`eval.py` + `data/evals/cases.jsonl`)
+Golden dataset con 8 casos cubriendo Azure-fit, AWS-fit, GCP-fit, empates y casos agnósticos. `python eval.py [--variance N] [--out report.md]` mide:
+- `winner_hit_rate` — % de aciertos del cloud esperado
+- `confidence_hit_rate` — la confianza cae en la banda esperada
+- `must_mention_hit_rate` — keywords obligatorios presentes
+- `variance_consistent_cases` — N runs del mismo caso → mismo winner (debería ser 100% con seed=42)
+
+### P4 — Upload self-service del KB (`agent_arena/kb_upload.py`)
+`/upload` en Chainlit abre file picker (md/txt/pdf), guarda en `knowledge_base/project_cases/<client_id>/` con metadata y lanza reindex en background. PDFs parseados con `pypdf`. La consultora puede inyectar sus project_cases sin tocar markdown.
+
+### P7 — API REST + SSE (`api.py` + `frontend/README.md`)
+FastAPI con:
+- `POST /arena/run` — SSE streaming de eventos del pipeline + `result` final
+- `GET /arena/runs?client_id=...` — listado
+- `GET /arena/runs/{run_id}` — snapshot completo
+- `POST /arena/upload` — multipart upload
+- `GET /healthz`
+
+Listo para enchufar un Next.js + React Flow encima (contrato documentado en `frontend/README.md`). Arrancar con:
+```bash
+python -m uvicorn api:app --reload --port 8080
+```
+
+---
+
 ## 4. Brechas restantes (roadmap para llevar a producto)
 
 Ordenadas por impacto sobre la visión "herramienta para consultoras":

@@ -317,6 +317,7 @@ def build_final_architecture_prompt_typed(
     aws_proposal: str,
     final_comparison: str,
     gcp_proposal: str = "",
+    specialist_block: str = "",
 ) -> str:
     proposals_section = f"""
 AZURE PROPOSAL:
@@ -355,6 +356,8 @@ LLM-EXTRACTED REQUIREMENTS:
 JUDGE COMPARISON:
 {final_comparison}
 
+{specialist_block}
+
 STRICT RULES:
 1. Produce one final architecture proposal.
 2. Choose Azure, AWS, GCP, or a phased or hybrid recommendation only if justified by the previous proposals and judge comparison.
@@ -367,6 +370,9 @@ STRICT RULES:
 9. Write the complete output in Spanish.
 10. Keep it executive and concise, target 450 to 700 words.
 11. Use practical and decision-oriented language.
+12. INCORPORATE the specialist findings when shown: every HIGH severity finding must
+    be addressed in section 3 (architecture) or section 7 (risks). Mention which
+    finding you are addressing.
 
 OUTPUT FORMAT:
 

@@ -221,3 +221,8 @@ class AgentArenaResult(BaseModel):
     mermaid_diagram: str = ""
     rewrite_counts: dict = Field(default_factory=dict)
     verdict: Optional[JudgeVerdict] = None
+    # Audit / memory metadata (P3, P5)
+    run_id: Optional[str] = None
+    client_id: Optional[str] = None
+    snapshot_path: Optional[str] = None
+    specialist_findings: list = Field(default_factory=list)

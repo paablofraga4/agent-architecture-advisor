@@ -20,9 +20,11 @@ PIPELINE_NODES: list[tuple[str, str]] = [
     ("gcp",           "5. GCP Agent"),
     ("validation",    "6. Citation validator"),
     ("judge",         "7. Judge"),
-    ("final",         "8. Final Architecture"),
-    ("cost",          "9. Cost estimator"),
-    ("diagram",       "10. Diagram"),
+    ("specialists",   "8. Specialists<br/>Sec/FinOps/Comp/Data"),
+    ("final",         "9. Final Architecture"),
+    ("cost",          "10. Cost estimator"),
+    ("diagram",       "11. Diagram"),
+    ("audit",         "12. Audit snapshot"),
 ]
 
 EDGES: list[tuple[str, str]] = [
@@ -34,9 +36,11 @@ EDGES: list[tuple[str, str]] = [
     ("aws", "validation"),
     ("gcp", "validation"),
     ("validation", "judge"),
-    ("judge", "final"),
+    ("judge", "specialists"),
+    ("specialists", "final"),
     ("final", "cost"),
     ("final", "diagram"),
+    ("final", "audit"),
 ]
 
 # Map of arena event name -> (node_id, status_to_set)
@@ -65,6 +69,10 @@ EVENT_MAP: dict[str, tuple[str, NodeStatus]] = {
     "diagram_generation_started":  ("diagram", "running"),
     "diagram_generation_finished": ("diagram", "done"),
     "diagram_generation_error":    ("diagram", "error"),
+    "specialists_started":         ("specialists", "running"),
+    "specialists_finished":        ("specialists", "done"),
+    "audit_saved":                 ("audit", "done"),
+    "audit_error":                 ("audit", "error"),
 }
 
 
