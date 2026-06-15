@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python ingest_and_index.py)",
+      "Bash(pip list:*)",
+      "Bash(python -c \"import requests; print\\('requests OK'\\)\")",
+      "Bash(python -c \"import bs4; print\\('bs4 OK'\\)\")",
+      "Bash(python -c \"import httpx; print\\('httpx OK'\\)\")",
+      "Bash(python -c \"import markdownify; print\\('markdownify OK'\\)\")",
+      "Bash(python:*)",
+      "Bash(tasklist)",
+      "Bash(ls -lt knowledge_base/cloud_services/azure/*.md)",
+      "Bash(ls:*)"
+    ]
+  }
+}

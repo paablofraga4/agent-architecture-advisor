@@ -1,0 +1,10 @@
+{
+  "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/what-is-fargate.html",
+  "status": 200,
+  "fetched_at": "2026-06-10T16:38:00.198514+00:00",
+  "html": "<!DOCTYPE html>\n        <!DOCTYPE HTML><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title>Amazon Elastic Container Service</title><meta xmlns=\"\" name=\"subtitle\" content=\"Developer Guide\"><meta xmlns=\"\" name=\"abstract\" content=\"Run, stop, and manage Docker containers on a cluster using the Amazon Elastic Container Service Developer Guide.\"><meta http-equiv=\"refresh\" content=\"0;URL=Welcome.html\"><script type=\"text/javascript\"><!--\n        var myDefaultPage = \"Welcome.html\";\n           \tvar myPage = document.location.search.substr(1);\n           \tvar myHash = document.location.hash;\n        \n              if (myPage == null || myPage.length == 0) {\n                 myPage = myDefaultPage;\n              } else {\n                 var docfile = myPage.match(/[^=\\;\\/?:\\s]+\\.html/);\n                 if (docfile == null) {\n       \t\t\t\tmyPage = myDefaultPage;\n    \t     \t\t } else {\n                    myPage = docfile + myHash;\n                 }\n              }\n              self.location.replace(myPage);\n    --></script></head><body></body></html>",
+  "text": "",
+  "markdown": "",
+  "title": "Amazon Elastic Container Service",
+  "error": null
+}
