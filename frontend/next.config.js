@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  // Disabled because StrictMode double-mounts effects in dev, which aborts
+  // our long-running SSE stream and shows a spurious AbortError.
+  reactStrictMode: false,
   async rewrites() {
     return [
       {

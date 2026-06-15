@@ -54,7 +54,11 @@ function RunInner() {
         if (evt.event === "done") setDone(true);
       },
       ctrl.signal
-    ).catch((e) => setError(String(e)));
+    ).catch((e) => {
+      // React StrictMode double-mounts in dev — ignore the resulting abort.
+      if (e?.name === "AbortError" || String(e).includes("aborted")) return;
+      setError(String(e));
+    });
 
     return () => ctrl.abort();
   }, [idea, clientId]);
