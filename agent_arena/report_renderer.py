@@ -5,17 +5,53 @@ from .schemas import AgentArenaResult
 
 
 def _pick_winner(result: AgentArenaResult) -> str:
-    """Heuristic: look at final comparison text for a verdict line."""
+    """Prefer the structured verdict; fall back to text heuristic only if missing."""
+    if result.verdict is not None:
+        return result.verdict.winner.upper()
     text = (result.final_comparison or "").lower()
     for cloud in ("azure", "aws", "gcp"):
         if f"recomendamos {cloud}" in text or f"recommend {cloud}" in text or f"ganador: {cloud}" in text:
             return cloud.upper()
-    # Fallback: first cloud mentioned in final_architecture title
     final = (result.final_architecture_proposal or "")[:300].lower()
     for cloud in ("azure", "aws", "gcp"):
         if cloud in final:
             return cloud.upper()
     return "—"
+
+
+def _render_confidence_banner(result: AgentArenaResult) -> str:
+    """Show an explicit notice when the judge wasn't confident about the winner."""
+    v = result.verdict
+    if v is None or v.confidence == "clear":
+        return ""
+
+    winner = v.winner.upper()
+    runners = [p.upper() for p in v.runners_up_within_gap if p != v.winner]
+    runners_str = " · ".join(runners) if runners else "el resto"
+
+    if v.confidence == "tie":
+        title = "⚖️ Empate técnico entre proveedores"
+        body = (
+            f"Las propuestas de **{winner}** y **{runners_str}** son funcionalmente "
+            f"equivalentes para este proyecto (diferencia de {v.score_gap} pts sobre 100). "
+            f"La arquitectura mostrada abajo es la de **{winner}** por convención, "
+            f"pero cualquiera de las otras es igual de defendible."
+        )
+    else:  # close_tie
+        title = "⚠️ Ganador no concluyente"
+        body = (
+            f"**{winner}** lidera por solo {v.score_gap} pts sobre **{runners_str}**. "
+            f"Mostramos la arquitectura de {winner} pero la decisión final debería "
+            f"considerar restricciones no técnicas (contratos existentes, skills internos, "
+            f"acuerdos comerciales con el proveedor)."
+        )
+
+    reason = v.reasoning_summary.strip()
+    return (
+        f"> **{title}**\n>\n"
+        f"> {body}\n>\n"
+        f"> *Razonamiento del juez:* {reason}\n\n"
+    )
 
 
 def render_report_header(result: AgentArenaResult) -> str:
@@ -34,9 +70,10 @@ def render_report_header(result: AgentArenaResult) -> str:
         + (len(result.gcp_validation.cited_ids) if result.gcp_validation else 0)
     )
 
+    banner = _render_confidence_banner(result)
     return f"""# Informe de Arquitectura
 
-> **Proyecto:** {planner.project_summary}
+{banner}> **Proyecto:** {planner.project_summary}
 > **Tipo:** {planner.project_type}
 > **Cloud recomendado:** **{winner}**
 

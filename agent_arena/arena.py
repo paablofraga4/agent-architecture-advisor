@@ -8,6 +8,7 @@ from .schemas import (
     BusinessContext,
     ContextPack,
     DEFAULT_BUSINESS_CONTEXT,
+    JudgeVerdict,
 )
 from .config import (
     AZURE_AGENT_MODEL,
@@ -38,6 +39,7 @@ from .prompts import (
     build_final_architecture_prompt_typed,
     build_final_rewrite_prompt_typed,
     build_judge_prompt_typed,
+    build_judge_verdict_prompt_typed,
     build_rewrite_prompt_typed,
     build_followup_prompt,
 )
@@ -466,6 +468,32 @@ async def run_agent_arena_with_llm_planner_pydantic_async(
         )
         await _emit(progress_callback, "judge_finished", {"final_comparison": final_comparison})
 
+        # Structured verdict (winner + confidence). Small extra call.
+        verdict: JudgeVerdict | None = None
+        try:
+            verdict_prompt = build_judge_verdict_prompt_typed(
+                context_pack=context_pack,
+                azure_proposal=azure_proposal,
+                aws_proposal=aws_proposal,
+                gcp_proposal=gcp_proposal,
+                final_comparison=final_comparison,
+            )
+            verdict_raw = await call_llm_async(
+                prompt=verdict_prompt, model=judge_model, trace=run_trace,
+                span_name="judge_verdict_generation", metadata={"agent": "judge_verdict"},
+                agent_name="judge_verdict_agent",
+            )
+            import json, re
+            json_match = re.search(r"\{.*\}", verdict_raw, re.DOTALL)
+            if json_match:
+                verdict = JudgeVerdict.model_validate_json(json_match.group(0))
+                await _emit(progress_callback, "verdict_finished", {
+                    "verdict": verdict.model_dump_json(indent=2),
+                })
+        except Exception as exc:
+            print(f"  [WARN] Verdict parsing failed: {exc}")
+            await _emit(progress_callback, "verdict_error", {"error": str(exc)})
+
         # Final architecture
         await _emit(progress_callback, "final_architecture_started", {})
         final_model = FINAL_MODEL if FINAL_MODEL != model else model
@@ -570,6 +598,7 @@ async def run_agent_arena_with_llm_planner_pydantic_async(
             cost_comparison=cost_comparison,
             mermaid_diagram=mermaid_diagram,
             rewrite_counts=rewrite_counts,
+            verdict=verdict,
         )
 
         _lf_update(

@@ -184,6 +184,24 @@ class ClarificationRequest(BaseModel):
     proceed_anyway: bool = True
 
 
+Confidence = Literal["clear", "close_tie", "tie"]
+
+
+class JudgeVerdict(BaseModel):
+    """Structured verdict from the judge agent.
+
+    confidence:
+      - "clear":     one provider is clearly better (>=15 pt gap on 0-100 scale).
+      - "close_tie": a leader exists but runners-up are within 14 pts.
+      - "tie":       two or more providers are functionally equivalent (<5 pt gap).
+    """
+    winner: Literal["azure", "aws", "gcp"]
+    confidence: Confidence
+    score_gap: int = Field(ge=0, le=100, description="Gap winner vs best runner-up.")
+    runners_up_within_gap: List[Literal["azure", "aws", "gcp"]] = Field(default_factory=list)
+    reasoning_summary: str
+
+
 class AgentArenaResult(BaseModel):
     context_pack: ContextPack
 
@@ -202,3 +220,4 @@ class AgentArenaResult(BaseModel):
     cost_comparison: Optional[CostComparison] = None
     mermaid_diagram: str = ""
     rewrite_counts: dict = Field(default_factory=dict)
+    verdict: Optional[JudgeVerdict] = None

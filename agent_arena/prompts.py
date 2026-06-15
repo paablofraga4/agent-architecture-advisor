@@ -236,6 +236,55 @@ OUTPUT FORMAT:
 """
 
 
+def build_judge_verdict_prompt_typed(
+    context_pack: ContextPack,
+    azure_proposal: str,
+    aws_proposal: str,
+    final_comparison: str,
+    gcp_proposal: str = "",
+) -> str:
+    proposals = f"AZURE:\n{azure_proposal}\n\nAWS:\n{aws_proposal}\n"
+    if gcp_proposal:
+        proposals += f"\nGCP:\n{gcp_proposal}\n"
+    providers = '["azure", "aws"' + (', "gcp"' if gcp_proposal else "") + ']'
+
+    return f"""You are scoring 3 cloud architecture proposals already written by other agents.
+
+USER PROJECT:
+{context_pack.user_idea}
+
+EXTRACTED REQUIREMENTS:
+{context_pack.planner_output.model_dump_json(indent=2)}
+
+PROPOSALS:
+{proposals}
+
+COMPARISON ALREADY PRODUCED:
+{final_comparison}
+
+TASK:
+Score each provider 0-100 on overall fit for THIS user idea and THIS business context.
+Be honest: if two or three providers can solve it equally well with comparable cost,
+trade-offs and ecosystem fit — call it a tie. Do NOT artificially separate them.
+
+Return ONLY a JSON object, no Markdown, no explanation outside JSON.
+
+CONFIDENCE RULES (derive automatically from your scores):
+- "clear":     winner is >= 15 points above the best runner-up.
+- "close_tie": winner is 5-14 points above the best runner-up.
+- "tie":       winner is < 5 points above the best runner-up.
+
+EXACT JSON SHAPE:
+{{
+  "winner": "azure" | "aws" | "gcp",
+  "confidence": "clear" | "close_tie" | "tie",
+  "score_gap": <int 0-100, gap winner vs best runner-up>,
+  "runners_up_within_gap": [<providers within 14 points of winner, from {providers}>],
+  "reasoning_summary": "<one short sentence — why this verdict>"
+}}
+"""
+
+
 def build_final_architecture_prompt_typed(
     context_pack: ContextPack,
     azure_proposal: str,
