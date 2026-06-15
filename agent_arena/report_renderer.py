@@ -50,25 +50,17 @@ def render_report_header(result: AgentArenaResult) -> str:
 """
 
 
-def _kroki_url(mermaid_src: str, fmt: str = "png") -> str:
-    """Render Mermaid via kroki.io as an inline image URL."""
-    import base64, zlib
-    compressed = zlib.compress(mermaid_src.encode("utf-8"), 9)
-    encoded = base64.urlsafe_b64encode(compressed).decode("ascii")
-    return f"https://kroki.io/mermaid/{fmt}/{encoded}"
-
-
-def fetch_architecture_png(mermaid_src: str) -> bytes | None:
-    """Render Mermaid to PNG via kroki.io. Returns PNG bytes or None on failure.
-    Uses POST with raw source to avoid User-Agent and URL-length issues.
+def fetch_architecture_image(diagram_src: str) -> tuple[bytes, str] | None:
+    """Render D2 via kroki.io. Returns (svg_bytes, mime) or None on failure.
+    The diagram agent now emits D2, which renders much cleaner than Mermaid.
     """
-    if not mermaid_src:
+    if not diagram_src:
         return None
     import urllib.request
     try:
         req = urllib.request.Request(
-            "https://kroki.io/mermaid/png",
-            data=mermaid_src.encode("utf-8"),
+            "https://kroki.io/d2/svg",
+            data=diagram_src.encode("utf-8"),
             headers={
                 "Content-Type": "text/plain",
                 "User-Agent": "agent-architecture-advisor-mvp/1.0",
@@ -76,19 +68,19 @@ def fetch_architecture_png(mermaid_src: str) -> bytes | None:
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=30) as resp:
-            return resp.read()
+            return resp.read(), "image/svg+xml"
     except Exception as exc:
-        print(f"[WARN] kroki render failed: {exc}")
+        print(f"[WARN] kroki D2 render failed: {exc}")
         return None
 
 
-# Kept for backwards-compat / fallback rendering only.
+# Text fallback only used if kroki fails.
 def render_architecture_section(result: AgentArenaResult) -> str:
     if not result.mermaid_diagram:
         return ""
     return (
         "## Arquitectura propuesta\n\n"
-        f"```mermaid\n{result.mermaid_diagram}\n```\n"
+        f"```\n{result.mermaid_diagram}\n```\n"
     )
 
 

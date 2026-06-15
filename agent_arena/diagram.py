@@ -3,34 +3,56 @@ from __future__ import annotations
 from .llm import call_llm_async, _run_coroutine_in_new_thread
 
 
-DIAGRAM_SYSTEM_PROMPT = """You are a technical diagram generator. You produce Mermaid diagram code from architecture proposals.
+DIAGRAM_SYSTEM_PROMPT = """You are a technical diagram generator. You produce D2 (https://d2lang.com) diagram code from architecture proposals.
 
-STRICT RULES:
-1. Output ONLY valid Mermaid code inside a ```mermaid code block.
-2. Use flowchart TD (top-down) layout.
-3. Include all major components mentioned in the proposal.
-4. Group components by layer using subgraph blocks: Ingestion, Processing, AI/Agents, Storage, Serving, Observability. Omit layers that don't apply.
-5. Use clear, short labels (no more than 4 words per node).
-6. Show data flow direction with arrows; use labeled arrows for non-obvious flows: A -->|event| B
-7. Do not include explanatory text outside the mermaid block.
-8. Keep it readable — max 25 nodes.
-9. Use shapes by component kind:
-   - databases / vector stores: [(name)]
-   - object storage / blobs: [/name/]
-   - queues / streams / event buses: ([name])
-   - serverless / compute services: (name)
-   - LLMs / agents: {{name}}
-   - users / external systems: ((name))
-10. ALWAYS append these classDef blocks at the end and assign each node to ONE of the provider classes
-    based on the cloud service prefix (Azure/Microsoft -> azure, AWS/Amazon -> aws, GCP/Google -> gcp,
-    everything else -> neutral):
+OUTPUT FORMAT:
+Return ONLY valid D2 code inside a ```d2 code block. No prose, no markdown headings.
 
-    classDef azure   fill:#0078D4,stroke:#005A9E,color:#ffffff
-    classDef aws     fill:#FF9900,stroke:#CC7A00,color:#1a1a1a
-    classDef gcp     fill:#4285F4,stroke:#1A73E8,color:#ffffff
-    classDef neutral fill:#374151,stroke:#1f2937,color:#ffffff
+D2 SYNTAX RULES:
+1. First line: `direction: right`
+2. Group components into containers by layer. Use these container names if applicable:
+   ingestion, processing, ai, storage, serving, observability
+   Example:
+     ai: AI / Agents {
+       openai: Azure OpenAI {shape: cloud}
+       agent: Agent Framework {shape: hexagon}
+     }
+3. Component shape by kind:
+   - users / external clients: {shape: person}
+   - APIs / gateways: {shape: hexagon}
+   - compute / functions / agents: {shape: cloud}
+   - databases / vector stores: {shape: cylinder}
+   - queues / streams: {shape: queue}
+   - storage / blobs: {shape: page}
+4. Edges show data flow. Label them when non-obvious:  api -> openai: completion
+5. Color nodes by cloud provider with style.fill:
+   - Azure (Azure/Microsoft services):  {style.fill: "#0078D4"; style.stroke: "#005A9E"; style.font-color: "#ffffff"}
+   - AWS    (Amazon/AWS services):      {style.fill: "#FF9900"; style.stroke: "#CC7A00"; style.font-color: "#1a1a1a"}
+   - GCP    (Google/GCP services):      {style.fill: "#4285F4"; style.stroke: "#1A73E8"; style.font-color: "#ffffff"}
+   - Neutral (third-party, on-prem):    {style.fill: "#374151"; style.stroke: "#1f2937"; style.font-color: "#ffffff"}
+6. Keep it readable: max 20 nodes, short labels (no more than 4 words).
+7. No `classDef`, no Mermaid syntax. This is D2.
 
-    Example assignment line:  class blob,functions,openai azure
+EXAMPLE (target style — do NOT copy the components, only the shape of the syntax):
+
+```d2
+direction: right
+
+ingestion: Ingestion {
+  user: User {shape: person}
+}
+
+ai: AI {
+  openai: Azure OpenAI {shape: cloud; style.fill: "#0078D4"; style.stroke: "#005A9E"; style.font-color: "#ffffff"}
+}
+
+storage: Storage {
+  search: Azure AI Search {shape: cylinder; style.fill: "#0078D4"; style.stroke: "#005A9E"; style.font-color: "#ffffff"}
+}
+
+ingestion.user -> ai.openai: query
+ai.openai -> storage.search: retrieve
+```
 """
 
 
@@ -43,19 +65,19 @@ USER PROJECT:
 FINAL ARCHITECTURE PROPOSAL:
 {final_proposal}
 
-Generate a Mermaid flowchart diagram that visualizes this architecture.
-Include the selected cloud provider services as node labels.
-Group by architectural layer using subgraph blocks.
+Generate a D2 diagram of this architecture following all the rules above.
 """
 
 
-def extract_mermaid_code(llm_output: str) -> str:
+def extract_d2_code(llm_output: str) -> str:
     import re
-    match = re.search(r"```mermaid\s*\n(.*?)```", llm_output, re.DOTALL)
+    match = re.search(r"```d2\s*\n(.*?)```", llm_output, re.DOTALL)
     if match:
         return match.group(1).strip()
-    if llm_output.strip().startswith("flowchart") or llm_output.strip().startswith("graph"):
-        return llm_output.strip()
+    # Fallback: maybe model emitted mermaid by mistake — strip the fence anyway
+    match = re.search(r"```(?:mermaid)?\s*\n(.*?)```", llm_output, re.DOTALL)
+    if match:
+        return match.group(1).strip()
     return llm_output.strip()
 
 
@@ -74,7 +96,7 @@ async def generate_diagram_async(
         metadata={"agent": "diagram"},
         agent_name="diagram_generator_agent",
     )
-    return extract_mermaid_code(raw)
+    return extract_d2_code(raw)
 
 
 def generate_diagram(

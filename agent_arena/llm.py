@@ -5,10 +5,15 @@ import asyncio
 import os
 
 from dotenv import load_dotenv
-from agent_framework import Agent
+from agent_framework import Agent, ChatOptions
 from agent_framework.foundry import FoundryChatClient
 from agent_framework.openai import OpenAIChatClient
 from azure.identity import AzureCliCredential
+
+# Deterministic sampling for reproducibility across runs.
+# Overridable via env if a particular agent (e.g. brainstorming) needs variance.
+DETERMINISTIC_TEMPERATURE = float(os.getenv("ARENA_TEMPERATURE", "0.0"))
+DETERMINISTIC_SEED = int(os.getenv("ARENA_SEED", "42"))
 
 try:
     from langfuse import Langfuse
@@ -216,7 +221,11 @@ async def call_llm_async(
     )
 
     try:
-        response = await agent.run(prompt)
+        chat_options = ChatOptions(
+            temperature=DETERMINISTIC_TEMPERATURE,
+            seed=DETERMINISTIC_SEED,
+        )
+        response = await agent.run(prompt, options=chat_options)
         result_text = _stringify_agent_response(response)
         _lf_end(llm_span, output_data=result_text)
         return result_text
