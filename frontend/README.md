@@ -1,91 +1,84 @@
-# Frontend (Next.js + React Flow) — scaffold guide
+# Frontend (Next.js 14 + React Flow)
 
-The backend `api.py` exposes everything a frontend needs. This folder is a
-placeholder describing the contract and the recommended stack. The Next.js
-app is **not built in this MVP** because it's 2-3 weeks of work; the
-backend API is production-shaped so the frontend can be plugged in later
-without changing arena/agent code.
+Frontend operativo para el backend `api.py`. Páginas implementadas:
+
+- `/` — formulario de proyecto + selector de cliente + ejemplos
+- `/run?idea=...&client_id=...` — **live pipeline** con React Flow (12 nodos), veredicto, diagrama D2 renderizado vía kroki, propuesta detallada con react-markdown, hallazgos de especialistas por colores de severidad
+- `/runs` — historial filtrado por cliente con run_id, winner, confidence
+- `/kb` — upload de markdown/txt/pdf como project_case, company_context o decisions
+
+## Quickstart
+
+```bash
+# 1. Backend
+cd ..
+python -m uvicorn api:app --reload --port 8080
+
+# 2. Frontend
+cd frontend
+cp .env.example .env.local      # NEXT_PUBLIC_API_BASE=http://localhost:8080
+npm install
+npm run dev                     # http://localhost:3000
+```
 
 ## Stack
 
-- **Next.js 14 (App Router) + TypeScript**
-- **React Flow** for the live pipeline graph (nodes/edges driven by SSE events)
-- **TanStack Query** for `/arena/runs` and `/arena/runs/{id}`
-- **shadcn/ui + Tailwind** for the report layout
-- **react-markdown + rehype-raw** to render the architecture markdown
-- **next-themes** for dark mode (default)
+- **Next.js 14 App Router + TypeScript**
+- **React Flow** para el grafo del pipeline (animated edges cuando el flujo pasa)
+- **react-markdown + rehype-raw + remark-gfm** para el informe
+- **Tailwind CSS** (modo oscuro por defecto, paleta panel/border/accent/ok/warn/err)
+- SSE consumida vía `fetch` + `ReadableStream` (no `EventSource` porque necesitamos POST con body)
 
-## API contract
+## Arquitectura
+
+```
+app/
+  layout.tsx          # nav global
+  globals.css         # tailwind + estilos report-md
+  page.tsx            # home (form)
+  run/page.tsx        # live pipeline + report
+  runs/page.tsx       # history table
+  kb/page.tsx         # upload form
+components/
+  PipelineGraph.tsx   # React Flow + EVENT_MAP
+  Report.tsx          # markdown renderer
+  ArchitectureImage.tsx  # POST D2 → kroki → SVG
+lib/
+  api.ts              # listRuns, getRun, uploadDoc
+  sse.ts              # streamArenaRun (POST SSE parser)
+```
+
+## Contrato API
 
 ### POST /arena/run (SSE)
 
-Body:
-```json
-{ "idea": "...", "client_id": "acme", "model": "gpt-4o-mini" }
-```
+Body: `{ "idea": "...", "client_id": "acme", "model"?: "gpt-4o-mini" }`
 
-The response is a Server-Sent Events stream. Events to listen for:
+Eventos consumidos por la UI (ver `components/PipelineGraph.tsx:EVENT_MAP`):
 
-| Event                          | Payload                                                  |
-|--------------------------------|----------------------------------------------------------|
-| `planner_started/_finished`    | `{ planner_json }`                                        |
-| `retrieval_started/_finished`  | `{ contexts_summary, ... }`                              |
-| `azure_agent_started/_finished`| `{ proposal }`                                            |
-| `aws_agent_started/_finished`  | `{ proposal }`                                            |
-| `gcp_agent_started/_finished`  | `{ proposal }`                                            |
-| `citation_validation_*`        | `{ azure_valid, aws_valid, gcp_valid }`                   |
-| `judge_started/_finished`      | `{ final_comparison }`                                    |
-| `verdict_finished`             | `{ verdict: JudgeVerdict (json string) }`                |
-| `specialists_started/_finished`| `{ count, findings_total, summary }`                     |
-| `final_architecture_*`         | `{ proposal }`                                            |
-| `cost_estimation_*`            | `{ cost_comparison }`                                     |
-| `diagram_generation_*`         | `{ mermaid_diagram }` (actually D2 code now)             |
-| `audit_saved`                  | `{ run_id, path, kb_hash, prompts_hash }`                |
-| `result`                       | Full `AgentArenaResult` JSON                              |
-| `done`                         | `{}`                                                      |
-| `error`                        | `{ error }`                                               |
+| Evento                          | Acción UI                          |
+|--------------------------------|-------------------------------------|
+| `*_started` / `*_finished`     | Cambia color del nodo en React Flow |
+| `verdict_finished`             | (queda en el snapshot result)       |
+| `final_architecture_finished`  | Renderiza markdown del informe      |
+| `diagram_generation_finished`  | POST a kroki → muestra SVG          |
+| `audit_saved`                  | Marca nodo "audit" como done        |
+| `result`                       | Snapshot completo: veredicto + findings |
+| `error` / `done`               | Cierra stream                       |
 
-Drive React Flow node states off the started/finished events. The pipeline
-node ids match `agent_arena/flow_visualizer.py:PIPELINE_NODES`.
+### REST
 
-### GET /arena/runs?client_id=acme
+- `GET  /arena/runs?client_id=acme` → `{ runs: RunSummary[] }`
+- `GET  /arena/runs/{run_id}` → snapshot completo (firmado)
+- `POST /arena/upload` (multipart: `file`, `client_id`, `doc_type`, `title?`)
 
-Returns `{ runs: [{ run_id, client_id, timestamp_utc, project_summary, verdict_winner, verdict_confidence }] }`.
+## Lo que **NO** está hecho aún (para iteraciones siguientes)
 
-### GET /arena/runs/{run_id}
+- Auth / RBAC / multi-tenant aislado
+- White-label / branding por consultora
+- Export PDF/PPTX del informe
+- Streaming de tokens del LLM (los eventos son por hito, no por token)
+- Eval dashboard (lee `data/evals/*.md` que produce `eval.py`)
+- Diff entre runs del mismo cliente
 
-Full immutable snapshot — same shape as `data/runs/<run_id>.json`. Includes
-`signature_sha256` for audit verification.
-
-### POST /arena/upload (multipart)
-
-Fields: `file`, `client_id`, `doc_type` (`project_case` | `company_context` | `decisions`), `title`.
-
-Triggers a background reindex.
-
-## Local dev
-
-```bash
-# Backend
-python -m uvicorn api:app --reload --port 8080
-
-# Frontend (when built)
-cd frontend && npm install && npm run dev   # http://localhost:3000
-```
-
-Set `NEXT_PUBLIC_API_BASE=http://localhost:8080` in `frontend/.env.local`.
-
-## Page layout (recommended)
-
-- `/` — landing + project idea input + client selector
-- `/run/[runId]` — live pipeline view (React Flow) + report + diagram
-- `/runs` — history table per client
-- `/kb` — upload + browse project_cases per client
-- `/eval` — eval dashboard (hit rate, variance) from `data/evals/*.md`
-
-## Why no code yet
-
-Building Next.js properly is 2-3 weeks (auth, RBAC, white-label, PDF export,
-production deployment). The MVP focuses on the backend being shaped so that
-work can start without backend changes. The Chainlit UI in `app.py` covers
-the demo use case until then.
+Esto es el MVP visual del frontend: arranca, llama a la API, muestra el flujo en vivo y el informe completo. Suficiente para demo a un compañero o cliente potencial.
