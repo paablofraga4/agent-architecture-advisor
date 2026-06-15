@@ -63,13 +63,11 @@ def _kroki_url(mermaid_src: str, fmt: str = "svg") -> str:
 def render_architecture_section(result: AgentArenaResult) -> str:
     if not result.mermaid_diagram:
         return ""
-    url = _kroki_url(result.mermaid_diagram)
+    url = _kroki_url(result.mermaid_diagram, fmt="svg")
     return (
         "## Arquitectura propuesta\n\n"
-        f"![Arquitectura]({url})\n\n"
-        "<details><summary>Ver código Mermaid</summary>\n\n"
-        f"```mermaid\n{result.mermaid_diagram}\n```\n\n"
-        "</details>\n"
+        f'<img src="{url}" alt="Arquitectura" '
+        f'style="width:100%;max-width:1100px;display:block;margin:0 auto;" />\n'
     )
 
 
