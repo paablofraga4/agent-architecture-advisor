@@ -6,9 +6,15 @@ Guion para enseñar el sistema a un compañero en vivo. **Tiempo total: ~25 min*
 
 ## Preparación (antes de la demo)
 
-```bash
+```powershell
+# PowerShell (Windows)
 docker compose up -d                 # Qdrant arriba
 chainlit run app.py                  # http://localhost:8000
+```
+
+```bash
+# bash / zsh (macOS / Linux)
+docker compose up -d && chainlit run app.py
 ```
 
 Ten a mano el **REPORT.md** abierto en otra pestaña para el score y el roadmap.

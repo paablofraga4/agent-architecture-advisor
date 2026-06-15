@@ -86,15 +86,18 @@ Ordenadas por impacto sobre la visión "herramienta para consultoras":
 
 ## 5. Cómo correr el MVP
 
-```bash
-# 1. Levantar Qdrant
+PowerShell (Windows):
+
+```powershell
 docker compose up -d
-
-# 2. (Si no se hizo aún) construir KB e indexar
-python build_knowledge_base.py --index
-
-# 3. Lanzar Chainlit
+python build_knowledge_base.py --index   # solo la primera vez
 chainlit run app.py
+```
+
+bash / zsh:
+
+```bash
+docker compose up -d && python build_knowledge_base.py --index && chainlit run app.py
 ```
 
 Ver `DEMO.md` para el guion de la demo en vivo con 3 ideas preparadas.
