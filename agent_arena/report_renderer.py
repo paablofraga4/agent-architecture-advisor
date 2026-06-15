@@ -70,6 +70,18 @@ def render_report_header(result: AgentArenaResult) -> str:
         + (len(result.gcp_validation.cited_ids) if result.gcp_validation else 0)
     )
 
+    if result.verdict is not None:
+        v = result.verdict
+        label = {"clear": "✅ Claro", "close_tie": "⚠️ Marginal", "tie": "⚖️ Empate"}[v.confidence]
+        runners = ", ".join(p.upper() for p in v.runners_up_within_gap if p != v.winner)
+        confidence_row = (
+            f"| Confianza del juez | {label} · gap {v.score_gap}/100"
+            + (f" · empata con {runners}" if runners else "")
+            + " |\n"
+        )
+    else:
+        confidence_row = "| Confianza del juez | (no disponible — verdict no parseado) |\n"
+
     banner = _render_confidence_banner(result)
     return f"""# Informe de Arquitectura
 
@@ -84,7 +96,7 @@ def render_report_header(result: AgentArenaResult) -> str:
 | Contextos recuperados | Azure {len(pack.azure_contexts)} · AWS {len(pack.aws_contexts)} · GCP {len(pack.gcp_contexts)} · Neutral {len(pack.neutral_contexts)} |
 | Citas totales en propuestas | {citations} |
 | Reescrituras por validación | {sum(result.rewrite_counts.values()) if result.rewrite_counts else 0} |
-"""
+{confidence_row}"""
 
 
 def fetch_architecture_image(diagram_src: str) -> tuple[bytes, str] | None:

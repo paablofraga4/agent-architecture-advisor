@@ -126,6 +126,8 @@ async def on_message(message: cl.Message):
             "aws_agent_finished":           ("Propuesta AWS", "llm", "markdown", payload.get("proposal", "")),
             "gcp_agent_finished":           ("Propuesta GCP", "llm", "markdown", payload.get("proposal", "")),
             "judge_finished":               ("Comparativa del juez", "llm", "markdown", payload.get("final_comparison", "")),
+            "verdict_finished":             ("Veredicto estructurado", "llm", "json", payload.get("verdict", "")),
+            "verdict_error":                ("Veredicto: parseo fallido", "tool", None, payload.get("error", "")),
         }
         if event in label_map:
             name, type_, lang, output = label_map[event]

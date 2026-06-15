@@ -191,8 +191,8 @@ class JudgeVerdict(BaseModel):
     """Structured verdict from the judge agent.
 
     confidence:
-      - "clear":     one provider is clearly better (>=15 pt gap on 0-100 scale).
-      - "close_tie": a leader exists but runners-up are within 14 pts.
+      - "clear":     one provider is clearly better (>=20 pt gap on 0-100 scale).
+      - "close_tie": a leader exists but runners-up are within 5-19 pts.
       - "tie":       two or more providers are functionally equivalent (<5 pt gap).
     """
     winner: Literal["azure", "aws", "gcp"]

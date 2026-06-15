@@ -264,14 +264,24 @@ COMPARISON ALREADY PRODUCED:
 
 TASK:
 Score each provider 0-100 on overall fit for THIS user idea and THIS business context.
-Be honest: if two or three providers can solve it equally well with comparable cost,
-trade-offs and ecosystem fit — call it a tie. Do NOT artificially separate them.
+
+CRITICAL — be honest about ties. Most generic projects (web apps, APIs, basic RAG,
+CRUD, dashboards) can be solved equally well by all three providers. In those cases
+the gap should be SMALL (under 10 pts). Only declare a clear winner when there is
+a real differentiator: explicit cloud preference in the business context, regulatory
+constraint (EU residency, specific certifications), deep ecosystem lock-in (M365 →
+Azure, Google Workspace → GCP, existing AWS Organization), or a service one cloud
+genuinely does better (e.g. Vertex AI Search for very large corpora, Bedrock for
+some Anthropic models, Azure OpenAI for GPT-4 with EU residency).
+
+If you cannot point to such a differentiator, the verdict MUST be "tie" or
+"close_tie". Do not invent score gaps to justify a "clear" verdict.
 
 Return ONLY a JSON object, no Markdown, no explanation outside JSON.
 
 CONFIDENCE RULES (derive automatically from your scores):
-- "clear":     winner is >= 15 points above the best runner-up.
-- "close_tie": winner is 5-14 points above the best runner-up.
+- "clear":     winner is >= 20 points above the best runner-up.
+- "close_tie": winner is 5-19 points above the best runner-up.
 - "tie":       winner is < 5 points above the best runner-up.
 
 EXACT JSON SHAPE:
