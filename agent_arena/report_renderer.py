@@ -50,24 +50,45 @@ def render_report_header(result: AgentArenaResult) -> str:
 """
 
 
-def _kroki_url(mermaid_src: str, fmt: str = "svg") -> str:
-    """Render Mermaid via kroki.io as an inline image URL.
-    Uses zlib + url-safe base64 (kroki's expected encoding).
-    """
+def _kroki_url(mermaid_src: str, fmt: str = "png") -> str:
+    """Render Mermaid via kroki.io as an inline image URL."""
     import base64, zlib
     compressed = zlib.compress(mermaid_src.encode("utf-8"), 9)
     encoded = base64.urlsafe_b64encode(compressed).decode("ascii")
     return f"https://kroki.io/mermaid/{fmt}/{encoded}"
 
 
+def fetch_architecture_png(mermaid_src: str) -> bytes | None:
+    """Render Mermaid to PNG via kroki.io. Returns PNG bytes or None on failure.
+    Uses POST with raw source to avoid User-Agent and URL-length issues.
+    """
+    if not mermaid_src:
+        return None
+    import urllib.request
+    try:
+        req = urllib.request.Request(
+            "https://kroki.io/mermaid/png",
+            data=mermaid_src.encode("utf-8"),
+            headers={
+                "Content-Type": "text/plain",
+                "User-Agent": "agent-architecture-advisor-mvp/1.0",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return resp.read()
+    except Exception as exc:
+        print(f"[WARN] kroki render failed: {exc}")
+        return None
+
+
+# Kept for backwards-compat / fallback rendering only.
 def render_architecture_section(result: AgentArenaResult) -> str:
     if not result.mermaid_diagram:
         return ""
-    url = _kroki_url(result.mermaid_diagram, fmt="svg")
     return (
         "## Arquitectura propuesta\n\n"
-        f'<img src="{url}" alt="Arquitectura" '
-        f'style="width:100%;max-width:1100px;display:block;margin:0 auto;" />\n'
+        f"```mermaid\n{result.mermaid_diagram}\n```\n"
     )
 
 

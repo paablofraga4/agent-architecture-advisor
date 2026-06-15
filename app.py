@@ -33,7 +33,7 @@ import chainlit as cl
 
 from agent_arena.flow_visualizer import FlowState
 from agent_arena.flow_svg import render_markdown as render_flow_markdown
-from agent_arena.report_renderer import render_report_header, render_architecture_section
+from agent_arena.report_renderer import render_report_header, fetch_architecture_png, render_architecture_section
 
 
 WELCOME = (
@@ -153,9 +153,21 @@ async def on_message(message: cl.Message):
     # ---- Structured report ----
     await cl.Message(content=render_report_header(result)).send()
 
-    arch = render_architecture_section(result)
-    if arch:
-        await cl.Message(content=arch).send()
+    if result.mermaid_diagram:
+        png_bytes = fetch_architecture_png(result.mermaid_diagram)
+        if png_bytes:
+            arch_img = cl.Image(
+                content=png_bytes,
+                name="arquitectura",
+                display="inline",
+                size="large",
+            )
+            await cl.Message(
+                content="## Arquitectura propuesta",
+                elements=[arch_img],
+            ).send()
+        else:
+            await cl.Message(content=render_architecture_section(result)).send()
 
     await cl.Message(
         content="## Propuesta detallada\n\n" + result.final_architecture_proposal
