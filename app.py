@@ -9,6 +9,7 @@ if sys.version_info >= (3, 14):
         from anyio._core import _eventloop as _anyio_eventloop
         from anyio._core import _tasks as _anyio_tasks
         from anyio import to_thread as _anyio_to_thread
+        from anyio import lowlevel as _anyio_lowlevel
 
         _orig_get_async_backend = _anyio_eventloop.get_async_backend
         _NoCurrentAsyncBackend = _anyio_eventloop.NoCurrentAsyncBackend
@@ -24,6 +25,7 @@ if sys.version_info >= (3, 14):
         _anyio_eventloop.get_async_backend = _patched_get_async_backend
         _anyio_tasks.get_async_backend = _patched_get_async_backend
         _anyio_to_thread.get_async_backend = _patched_get_async_backend
+        _anyio_lowlevel.get_async_backend = _patched_get_async_backend
     except Exception:
         pass
 
