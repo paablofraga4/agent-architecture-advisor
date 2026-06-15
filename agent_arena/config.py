@@ -6,6 +6,12 @@ COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "agent_arena_knowledge_bas
 EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
+# If the Qdrant server can't be reached, fall back to embedded mode (no Docker).
+QDRANT_LOCAL_PATH = os.getenv(
+    "QDRANT_LOCAL_PATH",
+    str(BASE_DIR / "data" / "qdrant_local"),
+)
+QDRANT_FORCE_LOCAL = os.getenv("QDRANT_FORCE_LOCAL", "false").lower() == "true"
 DEFAULT_MODEL = os.getenv("AGENT_ARENA_MODEL", "gpt-4o-mini")
 
 # Per-agent model overrides (fall back to DEFAULT_MODEL)

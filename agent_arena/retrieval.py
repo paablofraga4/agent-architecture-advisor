@@ -5,7 +5,10 @@ from pydantic import ValidationError
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 
-from .config import COLLECTION_NAME, EMBEDDING_MODEL_NAME, QDRANT_HOST, QDRANT_PORT
+from .config import (
+    COLLECTION_NAME, EMBEDDING_MODEL_NAME,
+    QDRANT_HOST, QDRANT_PORT, QDRANT_LOCAL_PATH, QDRANT_FORCE_LOCAL,
+)
 from .schemas import Provider, RetrievedContext
 from .reranker import rerank_contexts
 
@@ -21,9 +24,28 @@ def get_embedding_model():
 
 
 def get_qdrant_client():
+    """Try the Qdrant server first. If it's unreachable (no Docker, port closed),
+    fall back to the embedded local mode that persists to disk at
+    QDRANT_LOCAL_PATH — no server, no Docker required.
+    """
     global _qdrant_client
-    if _qdrant_client is None:
-        _qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+    if _qdrant_client is not None:
+        return _qdrant_client
+
+    if not QDRANT_FORCE_LOCAL:
+        try:
+            client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, timeout=2)
+            # Force a real connection so we discover failure now, not later.
+            client.get_collections()
+            _qdrant_client = client
+            return _qdrant_client
+        except Exception as exc:
+            print(f"[INFO] Qdrant server at {QDRANT_HOST}:{QDRANT_PORT} unreachable ({type(exc).__name__}). "
+                  f"Falling back to embedded mode at {QDRANT_LOCAL_PATH}.")
+
+    from pathlib import Path
+    Path(QDRANT_LOCAL_PATH).mkdir(parents=True, exist_ok=True)
+    _qdrant_client = QdrantClient(path=QDRANT_LOCAL_PATH)
     return _qdrant_client
 
 

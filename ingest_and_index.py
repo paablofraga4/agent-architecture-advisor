@@ -22,6 +22,26 @@ from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, FieldCondition, Filter, MatchValue, PointStruct, VectorParams
 
+
+def _make_client(host: str, port: int) -> QdrantClient:
+    """Connect to the Qdrant server, or fall back to embedded local mode."""
+    import os
+    if os.getenv("QDRANT_FORCE_LOCAL", "false").lower() != "true":
+        try:
+            c = QdrantClient(host=host, port=port, timeout=2)
+            c.get_collections()
+            print(f"[INFO] Using Qdrant server at {host}:{port}")
+            return c
+        except Exception as exc:
+            print(f"[INFO] Qdrant server unreachable ({type(exc).__name__}). Falling back to embedded mode.")
+    local = os.getenv(
+        "QDRANT_LOCAL_PATH",
+        str(Path(__file__).resolve().parent / "data" / "qdrant_local"),
+    )
+    Path(local).mkdir(parents=True, exist_ok=True)
+    print(f"[INFO] Using embedded Qdrant at {local}")
+    return QdrantClient(path=local)
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -343,7 +363,7 @@ def index_to_qdrant(
     port: int,
 ):
     print(f"Connecting to Qdrant at {host}:{port}")
-    client = QdrantClient(host=host, port=port)
+    client = _make_client(host, port)
 
     embedding_dim = embeddings.shape[1]
 
@@ -387,7 +407,7 @@ def index_to_qdrant(
 # Step 6: Verify
 # ---------------------------------------------------------------------------
 def verify_index(collection_name: str, host: str, port: int, model_name: str):
-    client = QdrantClient(host=host, port=port)
+    client = _make_client(host, port)
     model = SentenceTransformer(model_name)
 
     for provider in ["azure", "aws", "gcp", "neutral"]:
