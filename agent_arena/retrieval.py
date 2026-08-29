@@ -4,6 +4,7 @@ from typing import List
 from pydantic import ValidationError
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
+from qdrant_client.http.exceptions import ResponseHandlingException
 
 from .config import (
     COLLECTION_NAME, EMBEDDING_MODEL_NAME,
@@ -81,14 +82,21 @@ def retrieve_contexts(
 
     search_filter = build_provider_filter(provider)
 
-    response = client.query_points(
-        collection_name=COLLECTION_NAME,
-        query=query_vector,
-        query_filter=search_filter,
-        limit=top_k,
-        with_payload=True,
-        with_vectors=False,
-    )
+    try:
+        response = client.query_points(
+            collection_name=COLLECTION_NAME,
+            query=query_vector,
+            query_filter=search_filter,
+            limit=top_k,
+            with_payload=True,
+            with_vectors=False,
+        )
+    except ResponseHandlingException as exc:
+        raise RuntimeError(
+            "No se pudo conectar con Qdrant. "
+            f"Revisa que el servicio este levantado en {QDRANT_HOST}:{QDRANT_PORT} "
+            "y que el puerto sea accesible."
+        ) from exc
 
     contexts = []
     for point in response.points:

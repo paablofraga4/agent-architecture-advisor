@@ -243,7 +243,22 @@ async def on_message(message: cl.Message):
         flow_state.apply_event("error")
         flow_msg.content = render_flow_markdown(flow_state) + f"\n\n**Error:** {exc}"
         await flow_msg.update()
-        raise
+
+        error_text = str(exc)
+        if "Qdrant" in error_text or "WinError 10061" in error_text or "ResponseHandlingException" in error_text:
+            await cl.Message(
+                content=(
+                    "No puedo recuperar contexto porque Qdrant no responde en `localhost:6333`.\n\n"
+                    "Verifica:\n"
+                    "1. Docker Desktop esta iniciado.\n"
+                    "2. El contenedor de Qdrant esta arriba (`docker compose up -d`).\n"
+                    "3. El puerto 6333 no esta bloqueado/ocupado.\n"
+                )
+            ).send()
+            return
+
+        await cl.Message(content=f"Error ejecutando Agent Arena: {exc}").send()
+        return
 
     cl.user_session.set("arena_result", result)
 
